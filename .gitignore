@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Colab / runtime
+.huggingface
+HF_TOKEN
+
+# Test data / large files (clips go in DRIVE /content/drive/MyDrive/VoxDetect, not git)
+ml-core/test_data/*
+!ml-core/test_data/README.md
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Results + checkpoints are DURABLE ON DRIVE, not committed (mirrors folium).
+# Repo only tracks the empty results/ folder (.gitkeep).
+ml-core/results/*
+!ml-core/results/.gitkeep
+ml-core/checkpoints/
+
+# Local secrets
+.env
+
+# The fabricated/wrong PS file (not the real problem statement for SIH26104)
+SIH_2026_Problem_Statement_104.md
+
+# Internal notes (learn.md is a working reference, not a deliverable)
+ml-core/learn.md
+
+# Internal project planning docs (not committed)
+plan.md
+AGILE_SPRINTS.md
+
