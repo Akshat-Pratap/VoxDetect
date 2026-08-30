@@ -1,0 +1,11 @@
+# ml-core runtime deps (installed by notebook cell 1 on Colab)
+# NOTE: never install a pip package named 'audio' (conflicts with torchaudio/librosa).
+torch>=2.0
+torchaudio
+transformers>=4.30
+librosa
+soundfile
+numpy
+scipy
+resemblyzer
+huggingface_hub

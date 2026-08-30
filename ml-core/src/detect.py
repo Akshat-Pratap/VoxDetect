@@ -36,10 +36,11 @@ def sigmoid(x):
 
 
 class DetectionEngine:
-    def __init__(self, model_variant="wav2vec2", weights=None, device="auto"):
+    def __init__(self, model_variant="wav2vec2", weights=None, device="auto", checkpoint=None):
         self.model_variant = model_variant
         self.device = device
         self.weights = DEFAULT_WEIGHTS if weights is None else weights
+        self.checkpoint = checkpoint
         self._model = None
         self._proc = None
         self._load_model()
@@ -49,7 +50,12 @@ class DetectionEngine:
             try:
                 import torch
                 from transformers import AutoFeatureExtractor, AutoModelForAudioClassification
-                repo = "Gustking/wav2vec2-large-xlsr-deepfake-audio-classification"
+                # A local fine-tuned dir overrides the pretrained repo. This is how a
+                # sprint3+ fine-tuned head gets swapped in for evaluation.
+                if self.checkpoint:
+                    repo = self.checkpoint
+                else:
+                    repo = "Gustking/wav2vec2-large-xlsr-deepfake-audio-classification"
                 self._proc = AutoFeatureExtractor.from_pretrained(repo)
                 self._model = AutoModelForAudioClassification.from_pretrained(repo)
                 # CRITICAL: verify class labels. Don't assume index order.

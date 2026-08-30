@@ -13,9 +13,10 @@ env/
 .huggingface
 HF_TOKEN
 
-# Test data / large files (clips go in DRIVE /content/drive/MyDrive/VoxDetect, not git)
+# Test data / large files (clips + dataset archive live on DRIVE, not git)
 ml-core/test_data/*
 !ml-core/test_data/README.md
+ml-core/dataset/
 *.wav
 *.mp3
 *.flac

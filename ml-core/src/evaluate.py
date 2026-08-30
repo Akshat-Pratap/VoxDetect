@@ -67,10 +67,14 @@ def main():
                     help="write the JSON result to this path (folium-style: one file per "
                          "sprint run, e.g. results/sprint1_baseline_english.json). "
                          "Implies --json.")
+    ap.add_argument("--checkpoint", default=None,
+                    help="local fine-tuned model dir to use instead of the pretrained repo "
+                         "(pass the sprint3+ fine-tuned dir, e.g. the path from "
+                         "finetune_head.py).")
     args = ap.parse_args()
 
     from detect import DetectionEngine
-    eng = DetectionEngine(model_variant=args.variant)
+    eng = DetectionEngine(model_variant=args.variant, checkpoint=args.checkpoint)
 
     items = build_index(args.root)
     if not items:
