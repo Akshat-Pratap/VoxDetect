@@ -55,42 +55,94 @@ python3 -m evaluate --root /content/VoxDetect_data \
     --find-threshold
 ```
 
-### 3. finetune_head.py — fine-tune the classification head on YOUR data (keep backbone)
-
-We keep the Gustking backbone (no model swap). Sprint 3 fine-tunes only the head on
-your own volunteer+clone clips (one TTS engine). See `notebooks/sprint3_finetune_head.ipynb`.
-
-Key guardrails:
-- **Label order is verified, not assumed**: prints pretrained `id2label`, sets our own
-  `real=0, fake=1`, asserts it before training.
-- **Sample rate read from the feature extractor config** (not hardcoded).
-- **Speaker-level eval (LOSO), never clip-level**: leave-one-speaker-out cross-validation
-  so the held-out speaker's real+cloned clips are never in training. A clip-level split
-  would just learn "that one person's voice" — meaningless numbers.
-- **Dual freeze schedules for the Colab compute budget**:
-  * LOSO folds train **only the head** (`--loso-frozen 24`) — fast, near-linear-probe.
-    LOSO is a generalization **signal**, not a tuning exercise (full unfreeze ×5 eats budget).
-  * The **final deployable model** is a single run, so it can afford the fuller recipe
-    (`--final-frozen`, default 20 / relax to 12 only if underfitting).
-- `--augment` adds noise/speed/volume jitter to **train clips only**, never the held-out test.
-- **Guard**: every speaker must have BOTH real and cloned clips; `gather()` prints a
-  per-speaker table and **hard-fails** if any speaker has one class (which would make a
-  fold's FPR/FNR undefined).
-- `--holdout <speaker>` keeps one speaker entirely out of the final model so you can A/B
-  base-vs-finetuned on the SAME unseen speaker (the "measured lift" slide).
+You can also append one row per run to the folium-style source-of-truth CSV
+(`ml-core/results/ablation_results.csv`), which self-documents **which dataset and
+checkpoint** were used plus every "how good is it" metric:
 
 ```bash
+python3 -m evaluate --root /content/garystafford_data \
+    --run-name baseline_garystafford --dataset garystafford \
+    --results /content/drive/MyDrive/VoxDetect/ml-core/results/ablation_results.csv \
+    --find-threshold --json
+```
+
+CSV columns: `variant, dataset, split, model, checkpoint, n_clips, accuracy, fpr,
+fnr, roc_auc, precision, recall, f1, threshold, epochs, lr, n_freeze, repo_commit,
+src_root, timestamp`. Re-running the same `(variant, dataset, split, checkpoint)`
+skips the duplicate so the table stays clean.
+
+### 2b. prepare_garystafford.py — open-license backup dataset (Track A / insurance)
+
+Our own clips are user-provided, but to GUARANTEE a trained model + numbers by the
+deadline we also support a public, open-license fallback
+(`garystafford/deepfake-audio-detection`, CC-BY-4.0, 1,866 balanced FLAC, English).
+This converts a sampled subset into the folder layout evaluate/finetune already read:
+
+```bash
+python3 scripts/prepare_garystafford.py --out garystafford_data --n 900
+# -> garystafford_data/real/<yt_source>/*.wav  and  fake/<tts_prefix>/*.wav
+```
+
+> **Honest caveat:** garystafford is a random clip-level set. The Gustking base was
+> already trained on similar TTS engines, so ACC/AUC here look high — it's
+> "fine-tuning adapts to this corpus," NOT a generalization claim. The team-LOSO run
+> (Track B) is the real generalization story. Keep the two as separate rows/stories.
+
+### 3. finetune_head.py — fine-tune the classification head (keep backbone)
+
+We keep the Gustking backbone (no model swap). Sprint 3 fine-tunes only the head.
+Two explicit data modes via `--data` (manual; Track A and Track B are SEPARATE stories):
+
+* `--data team` (default): YOUR real+cloned clips. Default eval = **leave-one-speaker-out**
+  CV (each speaker has both classes).
+* `--data garystafford`: OPEN-LICENSE fallback. No per-speaker pairing, so `--no-loso`
+  is forced and `--val-split` sizes the held-out TEST (plain stratified split).
+
+Key guardrails:
+- **Label order is verified, not assumed**: prints pretrained `id2label`, sets `real=0, fake=1`.
+- **Sample rate read from the feature extractor config** (not hardcoded).
+- **Speaker-level eval (LOSO), never clip-level** for team data; plain split for garystafford.
+- **Dual freeze schedules for the Colab compute budget**:
+  * LOSO folds train **only the head** (`--loso-frozen 24`) — fast.
+  * The **final deployable model** uses the fuller recipe (`--final-frozen`, default 20 / relax to 12 only if underfitting).
+- `--augment` adds noise/speed/volume jitter to **train clips only**.
+- **Checkpointing + resume**: per-epoch + `best_<tag>` checkpoints are saved under
+  `<out-dir>/checkpoints/`, and `--resume <dir>` continues a run — so a Colab runtime
+  drop never loses progress.
+- **Guard**: every speaker must have BOTH real and cloned clips (LOSO); hard-fails otherwise.
+- `--holdout <speaker>` keeps one speaker entirely out of the final model for the A/B slide.
+- `--results <csv>` appends each metric row to the source-of-truth table.
+
+```bash
+# Team (LOSO + holdout)
 python3 scripts/finetune_head.py \
-    --data-dir <root with real/ cloned/ as <lang>/<speaker>/*.wav> \
+    --data team \
+    --data-dir /content/VoxDetect_data \
     --out-dir /content/drive/MyDrive/VoxDetect/ml-core/checkpoints/ft_head_v1 \
     --epochs 5 --batch-size 4 --lr 1e-5 --augment \
-    --holdout speaker1
+    --holdout speaker1 \
+    --results /content/drive/MyDrive/VoxDetect/ml-core/results/ablation_results.csv
+
+# garystafford (plain split, insurance for Tuesday)
+python3 scripts/finetune_head.py \
+    --data garystafford \
+    --data-dir /content/garystafford_data \
+    --out-dir /content/drive/MyDrive/VoxDetect/ml-core/checkpoints/ft_gs_v1 \
+    --epochs 5 --batch-size 4 --lr 1e-5 --val-split 0.2 \
+    --results /content/drive/MyDrive/VoxDetect/ml-core/results/ablation_results.csv
 ```
 
 Saves the HF model dir + `finetune_report.json` (records strategy, label mapping, SR,
 augment flag, LOSO mean±std ACC/FPR/FNR, per-fold rows, holdout eval, and per-epoch
 train/eval loss sequences so you can check the overfit trend). Load the saved model back
 with `evaluate.py --checkpoint <dir>` / `DetectionEngine(checkpoint=<dir>)`.
+
+## Live demo (notebooks/live_demo.ipynb)
+
+The demo of "real-time detection" runs in Colab: `score_audio(wav, sr)` scores an
+in-memory buffer (mic capture) with the same fusion as `analyze_audio(path)`. Beat 1 =
+real voice via mic -> REAL; beat 2 = pre-made team `clone_*.wav` -> CLONED; ends on the
+numbers table. Run on the fine-tuned checkpoint if one exists.
 
 ## Creating the cloned clips (the fake half of the dataset)
 

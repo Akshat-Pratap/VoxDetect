@@ -16,7 +16,14 @@ import argparse
 import glob
 import json
 import os
+import sys
+
 import numpy as np
+
+_PATH = os.path.dirname(os.path.abspath(__file__))
+if _PATH not in sys.path:
+    sys.path.insert(0, _PATH)
+from results_tracking import log_ablation_row, make_row
 
 
 def build_index(root):
@@ -71,7 +78,29 @@ def main():
                     help="local fine-tuned model dir to use instead of the pretrained repo "
                          "(pass the sprint3+ fine-tuned dir, e.g. the path from "
                          "finetune_head.py).")
+    ap.add_argument("--results", default=None,
+                    help="folium-style source-of-truth CSV to append one row per run "
+                         "(e.g. ml-core/results/ablation_results.csv). Logs ACC/FPR/FNR/"
+                         "AUC/precision/recall/F1 + WHICH dataset & checkpoint. "
+                         "Default None = skip.")
+    ap.add_argument("--run-name", default=None,
+                    help="experiment name written in the results CSV row "
+                         "(e.g. baseline_garystafford / finetuned_garystafford). "
+                         "Defaults to the engine --variant.")
+    ap.add_argument("--dataset", default=None,
+                    help="which test corpus this row represents (e.g. garystafford / team / "
+                         "team_hindi). If omitted, inferred from --root's last path segment.")
+    ap.add_argument("--epochs", type=int, default=0,
+                    help="training epochs for this run's CSV row (0 for baseline / inference).")
+    ap.add_argument("--n-freeze", type=int, default=0,
+                    help="wav2vec2 layers frozen for the CSV row (0 = pretrained).")
     args = ap.parse_args()
+
+    if args.run_name is None:
+        args.run_name = args.variant
+        # --variant is the ENGINE variant (wav2vec2) unless the user changed it.
+    if args.dataset is None:
+        args.dataset = os.path.basename(os.path.normpath(args.root)) or "unknown"
 
     from detect import DetectionEngine
     eng = DetectionEngine(model_variant=args.variant, checkpoint=args.checkpoint)
@@ -104,6 +133,68 @@ def main():
     fpr = fp / (fp + tn) if (fp + tn) else 0.0
     fnr = fn / (fn + tp) if (fn + tp) else 0.0
 
+    # ROC-AUC (threshold-independent "how well does it separate") + per-class
+    # precision/recall/F1, so a reviewer has every "how good is it" label.
+    roc_auc = 0.0
+    if len({int(r["true_fake"]) for r in rows}) == 2:
+        try:
+            from sklearn.metrics import roc_auc_score
+            roc_auc = float(roc_auc_score(
+                [int(r["true_fake"]) for r in rows],
+                [r["score"] for r in rows],
+            ))
+        except Exception:
+            roc_auc = 0.0
+    p_real = tp / (tp + fp) if (tp + fp) else 0.0          # predict-real precision
+    r_real = tn / (tn + fn) if (tn + fn) else 0.0          # real recall
+    f1_real = 2 * p_real * r_real / (p_real + r_real) if (p_real + r_real) else 0.0
+
+    def log_csv(which_metrics, thr):
+        if not args.results:
+            return
+        log_ablation_row(args.results, make_row(
+            variant=args.run_name,
+            dataset=args.dataset,
+            split="test",
+            model=args.checkpoint or args.variant,
+            checkpoint=args.checkpoint or "pretrained:Gustking",
+            n_clips=n,
+            accuracy=(which_metrics["acc"] * 100.0),
+            fpr=(which_metrics["fpr"] * 100.0),
+            fnr=(which_metrics["fnr"] * 100.0),
+            roc_auc=(roc_auc * 100.0),
+            precision=(p_real * 100.0),
+            recall=(r_real * 100.0),
+            f1=(f1_real * 100.0),
+            threshold=thr,
+            epochs=args.epochs,
+            n_freeze=args.n_freeze,
+            src_root=args.root,
+        ))
+
+    find_payload = None
+    if args.find_threshold:
+        best = _find_best_threshold(rows)
+        # FNR at the SAME best threshold so the CSV row is self-consistent (ACC/FPR/FNR
+        # all at one cutoff), not a mix of best-ACC/FPR and default-threshold FNR.
+        n_fake = sum(1 for r in rows if r["true_fake"])
+        best_fn = sum(1 for r in rows if r["true_fake"] and r["score"] < best["thr"])
+        best_fn = best_fn / n_fake if n_fake else 0.0
+        log_csv({"acc": best["acc"], "fpr": best["fpr"], "fnr": best_fn}, best["thr"])
+        find_payload = {"mode": "find-threshold", "best": {k: round(v, 4) for k, v in best.items()}}
+        payload = find_payload
+        _emit(args, payload)
+        if not (args.json or args.out):
+            print("=" * 50)
+            print(f"Best threshold (max ACC, tie-break lower FPR): cutoff={best['thr']:.0f}, "
+                  f"ACC={best['acc']*100:.1f}%, FPR={best['fpr']*100:.1f}%")
+            print("=" * 50)
+            print(f"Suggested fixed cutoff for your risk bands: {best['thr']:.0f}")
+        return
+
+    metric_dict = {"acc": acc, "fpr": fpr, "fnr": fnr}
+    log_csv(metric_dict, args.threshold)
+
     # per-language breakdown if the path contains language hints
     langs = {}
     for r in rows:
@@ -124,17 +215,8 @@ def main():
         lacc = (wait + wait2) / len(rws) if rws else 0.0
         lang_stats[lang] = {"n": len(rws), "acc": round(lacc, 4)}
 
-    if args.find_threshold:
-        best = _find_best_threshold(rows)
-        payload = {"mode": "find-threshold", "best": {k: round(v, 4) for k, v in best.items()}}
-        _emit(args, payload)
-        if not (args.json or args.out):
-            print("=" * 50)
-            print(f"Best threshold (max ACC, tie-break lower FPR): cutoff={best['thr']:.0f}, "
-                  f"ACC={best['acc']*100:.1f}%, FPR={best['fpr']*100:.1f}%")
-            print("=" * 50)
-            print(f"Suggested fixed cutoff for your risk bands: {best['thr']:.0f}")
-        return
+    # (find_threshold branch was handled earlier with CSV logging; this is the
+    #  plain-threshold evaluate path.)
 
     payload = {
         "mode": "evaluate",
@@ -143,9 +225,16 @@ def main():
         "accuracy": round(acc, 4),
         "fpr": round(fpr, 4),
         "fnr": round(fnr, 4),
+        "roc_auc": round(roc_auc, 4),
+        "precision_real": round(p_real, 4),
+        "recall_real": round(r_real, 4),
+        "f1_real": round(f1_real, 4),
         "confusion": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
         "per_language": lang_stats,
         "src_root": args.root,
+        "dataset": args.dataset,
+        "variant": args.variant,
+        "run_name": args.run_name,
     }
     if args.json or args.out:
         _emit(args, payload)
@@ -156,6 +245,7 @@ def main():
     print(f"  Accuracy  : {acc*100:.1f}%")
     print(f"  False Pos : {fpr*100:.1f}%")
     print(f"  False Neg : {fnr*100:.1f}%")
+    print(f"  ROC-AUC   : {roc_auc*100:.1f}%")
     print(f"  TP={tp} FP={fp} TN={tn} FN={fn}")
     print("=" * 50)
 

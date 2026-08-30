@@ -13,11 +13,17 @@ Usage:
 import numpy as np
 
 
-def extract_prosody(path_or_bytes):
+def extract_prosody(path_or_bytes, sr=None):
+    """Extract prosody features. `path_or_bytes` may be a file path / raw bytes OR
+    a tuple (wav_array, sr) so callers with audio already in memory (e.g. live mic
+    via score_audio) avoid re-loading from disk."""
     import audio_utils
     import librosa
 
-    wav, sr = audio_utils.load_audio(path_or_bytes)
+    if isinstance(path_or_bytes, tuple):
+        wav, sr = path_or_bytes
+    else:
+        wav, sr = audio_utils.load_audio(path_or_bytes)
 
     # 1) Pitch via PYIN (already returns voiced f0 + voiced flag)
     f0, voiced_flag, _ = librosa.pyin(

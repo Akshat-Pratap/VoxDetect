@@ -29,6 +29,7 @@ Output (--out-dir):
 
 Colab usage (from the repo clone, after mount+hydrate):
     python3 scripts/finetune_head.py \
+        --data team \
         --data-dir /content/VoxDetect_data \
         --out-dir /content/drive/MyDrive/VoxDetect/ml-core/checkpoints/ft_head_v1 \
         --epochs 6 --batch-size 4 --lr 1e-5 --augment \
@@ -37,6 +38,21 @@ Colab usage (from the repo clone, after mount+hydrate):
     # Relax --final-frozen to 12 only if underfitting (test acc ~= train acc but low).
     # Drop --augment / adjust --epochs to trim Colab time.
 
+Two data modes (manual --data flag; Track A garystafford and Track B team are SEPARATE stories):
+  * --data team        : YOUR volunteer+clone clips (real/<lang>/<speaker> + cloned/<lang>/<speaker>).
+                         Default eval = LEAVE-ONE-SPEAKER-OUT CV (each speaker has real+cloned).
+  * --data garystafford: OPEN-LICENSE English fallback (see prepare_garystafford.py). NO per-speaker
+                         pairing, so eval is a PLAIN stratified train/val/test split: --no-loso is
+                         forced and --val-split sizes the held-out TEST set.
+
+Colab usage (garystafford backup, plain split):
+    python3 scripts/finetune_head.py \
+        --data garystafford \
+        --data-dir /content/garystafford_data \
+        --out-dir /content/drive/MyDrive/VoxDetect/ml-core/checkpoints/ft_gs_v1 \
+        --epochs 5 --batch-size 4 --lr 1e-5 --val-split 0.2
+    # Per-epoch + best checkpoints are written under <out-dir>/checkpoints/; --resume continues a run.
+
 See notebooks/sprint3_finetune_head.ipynb for the full walkthrough.
 """
 import argparse
@@ -44,6 +60,13 @@ import glob
 import json
 import os
 import pathlib
+import shutil
+import sys
+
+_PATH = os.path.dirname(os.path.abspath(__file__))   # this script's dir (scripts/)
+_SRC = os.path.join(os.path.dirname(_PATH), "src")    # sibling src/
+if _SRC not in sys.path:
+    sys.path.insert(0, _SRC)
 
 import numpy as np
 import torch
@@ -55,6 +78,8 @@ from transformers import (
     TrainingArguments,
     Trainer,
 )
+
+from results_tracking import log_ablation_row, make_row
 
 
 IMG_KEY = "input_values"
@@ -74,22 +99,25 @@ def get_sample_rate(proc):
 def speaker_of(path, data_root):
     """Return the SPEAKER folder for a clip, asserting the exact folder depth.
 
-    Canonical layout puts the speaker directly above the clip:
-        real/<language>/<speaker>/clip.wav          -> 4 parts
-        train/real/<language>/<speaker>/clip.wav    -> 5 parts
-    We hardcode this assumption and FAIL LOUDLY if the depth differs, rather than
-    inferring the speaker structurally and silently mis-partitioning the split.
+    Supported layouts (speaker is ALWAYS the folder directly above the clip):
+        real/<language>/<speaker>/clip.wav          -> 4 parts  (team data)
+        train/real/<language>/<speaker>/clip.wav    -> 5 parts  (team, with split dir)
+        real/<speaker>/clip.wav                     -> 3 parts  (garystafford flat layout)
+    We fail loudly if the depth differs, rather than inferring the speaker
+    structurally and silently mis-partitioning the split.
     """
     rel = pathlib.Path(path).relative_to(data_root).parts
     if len(rel) == 4:
         label, lang, speaker, fname = rel
+    elif len(rel) == 3:
+        label, speaker, fname = rel
     elif len(rel) == 5:
         _, label, lang, speaker, fname = rel
     else:
         raise SystemExit(
             f"[FAIL] unexpected folder depth {len(rel)} for {path}\n"
-            f"Expected 'real/<language>/<speaker>/clip.wav' (or with a leading "
-            f"train/ or test/ split dir).\n"
+            f"Expected 'real/<language>/<speaker>/clip.wav' (4), "
+            f"'real/<speaker>/clip.wav' (3), or with a leading train/ or test/ split dir.\n"
             f"The SPEAKER must be the folder directly above the clip. Check your tree:\n"
             f"  -> {rel}"
         )
@@ -220,23 +248,48 @@ def compute_metrics(metrics, items):
     }
 
 
-def train_once(repo, proc, train_items, test_items, sr, args, n_freeze):
-    """Fine-tune on train_items, evaluate on test_items (held-out speakers)."""
+def train_once(repo, proc, train_items, test_items, sr, args, n_freeze,
+               ckpt_dir=None, resume=None, tag=""):
+    """Fine-tune on train_items, evaluate on test_items (held-out speakers).
+
+    Checkpointing (so a Colab runtime drop never loses an epoch):
+      - per-epoch + best checkpoints saved under <ckpt_dir>/checkpoints/epoch_* /
+        best_<tag>.pt  (HuggingFace-style dirs, so --resume / evaluate --checkpoint work).
+      - if resume points at a saved HF dir, we continue from it instead of rebuilding.
+    """
     model = build_model(repo)
     freeze_head(model, n_freeze=n_freeze)
+
+    if resume and os.path.isdir(resume):
+        try:
+            model = AutoModelForAudioClassification.from_pretrained(resume)
+            print(f"[resume] continuing from existing model at {resume}")
+        except Exception as e:
+            print(f"[resume] could not load {resume} ({e}); starting fresh")
 
     train_ds = AudioDS(proc, train_items, sr, augment_train=args.augment)
     test_ds = AudioDS(proc, test_items, sr, augment_train=False)
 
+    save_dir = None
+    if ckpt_dir:
+        save_dir = os.path.join(ckpt_dir, "checkpoints")
+        os.makedirs(save_dir, exist_ok=True)
+
+    save_steps = max(1, args.epochs)  # save once per epoch (single pass control)
+
     train_args = TrainingArguments(
-        output_dir="/content/_ft_checkpoints",
+        output_dir=save_dir or "/content/_ft_checkpoints",
         num_train_epochs=args.epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size,
         learning_rate=args.lr,
         logging_steps=10,
         eval_strategy="epoch",
-        save_strategy="no",
+        save_strategy="epoch" if save_dir else "no",
+        save_total_limit=max(1, args.epochs),
+        metric_for_best_model="eval_acc",
+        greater_is_better=True,
+        load_best_model_at_end=True if save_dir else False,
         report_to=[],
         push_to_hub=False,
     )
@@ -247,8 +300,21 @@ def train_once(repo, proc, train_items, test_items, sr, args, n_freeze):
         eval_dataset=test_ds,
         compute_metrics=compute_metrics,
     )
-    trainer.train()
+    trainer.train(resume_from_checkpoint=resume if (resume and os.path.isdir(resume)) else None)
     metrics = trainer.evaluate(test_ds)
+
+    # Persist the BEST model (in-memory, because load_best_model_at_end=True already
+    # swapped the best weights in) to a predictable best_<tag> dir so both --resume and
+    # evaluate --checkpoint can point straight at it. Don't copy the LAST checkpoint dir
+    # here — with load_best_model_at_end the last-dir step number is NOT the best one.
+    if save_dir and os.path.isdir(save_dir):
+        best_dir = os.path.join(save_dir, "best_" + (tag or "model"))
+        if os.path.exists(best_dir):
+            shutil.rmtree(best_dir)
+        os.makedirs(best_dir)
+        trainer.save_model(best_dir)
+        proc.save_pretrained(best_dir)
+        print(f"[ckpt] best model + processor -> {best_dir}")
 
     # Per-epoch train + eval loss so we can eyeball the overfit trend (divergence),
     # not just a single before/after snapshot.
@@ -271,25 +337,67 @@ def train_once(repo, proc, train_items, test_items, sr, args, n_freeze):
     }, model
 
 
+def classify_metrics(labels, preds, probs=None):
+    """Full 'how good is it' metric set from 0=real / 1=fake labels & preds.
+
+    Returns ACC, FPR, FNR, per-class precision/recall/F1 (class 0 = real), plus
+    ROC-AUC (threshold-independent) when logits/probs are provided.
+    """
+    labels = np.asarray(labels)
+    preds = np.asarray(preds)
+    n = max(1, len(labels))
+    acc = float((preds == labels).mean())
+
+    # confusion counts (0=real negative-flip FPR; 1=fake positive-truth FN)
+    tp = int(((labels == 1) & (preds == 1)).sum())   # fake detected
+    fn_ = int(((labels == 1) & (preds == 0)).sum())   # fake missed
+    fp = int(((labels == 0) & (preds == 1)).sum())    # real flagged fake
+    tn = int(((labels == 0) & (preds == 0)).sum())    # real correct
+
+    fpr = fp / (fp + tn) if (fp + tn) else 0.0
+    fnr = fn_ / (fn_ + tp) if (fn_ + tp) else 0.0
+
+    def prf(tp_, fp_, fn_):
+        p = tp_ / (tp_ + fp_) if (tp_ + fp_) else 0.0
+        r = tp_ / (tp_ + fn_) if (tp_ + fn_) else 0.0
+        f = 2 * p * r / (p + r) if (p + r) else 0.0
+        return p, r, f
+
+    # per-class for the real class (0) and fake class (1)
+    p_real, r_real, f_real = prf(tn, fn_, fp)   # 'real' as the positive view
+    p_fake, r_fake, f_fake = prf(tp, fp, fn_)
+
+    auc = 0.0
+    if probs is not None and len(np.unique(labels)) == 2:
+        try:
+            from sklearn.metrics import roc_auc_score
+            auc = float(roc_auc_score(labels, np.asarray(probs)))
+        except Exception:
+            auc = 0.0
+
+    return {
+        "acc": acc, "fpr": fpr, "fnr": fnr, "roc_auc": auc,
+        "precision_real": p_real, "recall_real": r_real, "f1_real": f_real,
+        "precision_fake": p_fake, "recall_fake": r_fake, "f1_fake": f_fake,
+        "tp": tp, "fp": fp, "tn": tn, "fn": fn_, "n": len(labels),
+    }
+
+
 def inference_eval(model, proc, items, sr):
-    """Run a trained model in inference-only mode over items; return {acc, fpr, fnr}."""
+    """Run a trained model inference-only over items; return full classify_metrics."""
     model.eval()
     ds = AudioDS(proc, items, sr, augment_train=False)
     dl = DataLoader(ds, batch_size=4, shuffle=False)
-    preds, labels = [], []
+    preds, labels, probs = [], [], []
     with torch.no_grad():
         for batch in dl:
             feats = batch[IMG_KEY].to(device())
             out = model(feats).logits.detach().cpu().numpy()
+            p = torch.softmax(torch.from_numpy(out), dim=-1).numpy()
             preds.extend(np.argmax(out, axis=-1))
             labels.extend(batch["labels"].numpy())
-    labels = np.array(labels)
-    preds = np.array(preds)
-    return {
-        "acc": float((preds == labels).mean()),
-        "fpr": float(((labels == 0) & (preds == 1)).sum() / max(1, (labels == 0).sum())),
-        "fnr": float(((labels == 1) & (preds == 0)).sum() / max(1, (labels == 1).sum())),
-    }
+            probs.extend(p[:, 1].tolist())
+    return classify_metrics(labels, preds, probs)
 
 
 def device():
@@ -312,8 +420,62 @@ def summarize_rows(rows):
     return out
 
 
+def stratified_split(items, frac, seed=42):
+    """Plain clip-level stratified split -> (train_items, test_items) keeping both
+    classes present in each side. Used for --data garystafford (no speaker pairing,
+    so LOSO does not apply)."""
+    import random
+    rng = random.Random(seed)
+    items = list(items)
+    by_label = {0: [], 1: []}
+    for it in items:
+        by_label[it[1]].append(it)
+    train, test = [], []
+    for lab in (0, 1):
+        pool = list(by_label[lab])
+        rng.shuffle(pool)
+        n_test = max(1, int(round(len(pool) * frac)))
+        test.extend(pool[:n_test])
+        train.extend(pool[n_test:])
+    rng.shuffle(train)
+    rng.shuffle(test)
+    return train, test
+
+
+def log_metrics_row(args, csv_path, variant, dataset, split, metrics, checkpoint,
+                    n_clips=None, lr=None, epochs=None, n_freeze=None):
+    """Append one source-of-truth CSV row from a classify_metrics dict."""
+    if not csv_path:
+        return
+    row = make_row(
+        variant=variant,
+        dataset=dataset,
+        split=split,
+        model=args.repo if not os.path.isdir(checkpoint) else checkpoint,
+        checkpoint=str(checkpoint),
+        n_clips=n_clips if n_clips is not None else metrics.get("n", 0),
+        accuracy=(metrics["acc"] * 100.0),
+        fpr=(metrics["fpr"] * 100.0),
+        fnr=(metrics["fnr"] * 100.0),
+        roc_auc=(metrics["roc_auc"] * 100.0),
+        precision=(metrics["precision_real"] * 100.0),
+        recall=(metrics["recall_real"] * 100.0),
+        f1=(metrics["f1_real"] * 100.0),
+        threshold=0.0,
+        epochs=epochs if epochs is not None else args.epochs,
+        lr=lr if lr is not None else args.lr,
+        n_freeze=n_freeze if n_freeze is not None else args.final_frozen,
+        src_root=args.data_dir,
+    )
+    log_ablation_row(csv_path, row)
+
+
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--data", choices=("team", "garystafford"), default="team",
+                    help="which corpus: 'team' = YOUR real+cloned clips (LOSO by default); "
+                         "'garystafford' = open-license English fallback (PLAIN split forced). "
+                         "Track A (garystafford) and Track B (team) are separate stories.")
     ap.add_argument("--data-dir", required=True,
                     help="root with real/ + cloned/ (each <lang>/<speaker>/*.wav)")
     ap.add_argument("--out-dir", required=True, help="where to save the final model + report")
@@ -321,10 +483,22 @@ def main():
     ap.add_argument("--epochs", type=int, default=4)
     ap.add_argument("--batch-size", type=int, default=4)
     ap.add_argument("--lr", type=float, default=1e-5)
+    ap.add_argument("--val-split", type=float, default=0.2,
+                    help="held-out test fraction for --data garystafford (plain stratified "
+                         "split). 0.2 = 20% held out as test; the rest trains. "
+                         "Ignored for --data team (which uses LOSO/holdout).")
     ap.add_argument("--no-loso", action="store_true",
                     help="skip leave-one-speaker-out CV; just train+eval on all data. "
                          "Default is LOSO because a single 80/20 speaker split is only "
-                         "n=1 sample — high variance.")
+                         "n=1 sample — high variance. AUTO-ENABLED for --data garystafford.")
+    ap.add_argument("--resume", default=None,
+                    help="path to a previously-saved HF checkpoint dir to continue from "
+                         "(e.g. <out-dir>/checkpoints/best_<tag>). Colab safety net: if a "
+                         "runtime drops, re-run with --resume to continue instead of losing "
+                         "the epoch(s) already trained.")
+    ap.add_argument("--results-csv", default=None,
+                    help="folium-style source-of-truth CSV to append one row per run "
+                         "(default None = skip). All metrics + dataset + checkpoint logged.")
     ap.add_argument("--holdout", default=None,
                     help="speaker name kept ENTIRELY out of the final model's training, "
                          "then evaluated on it, so you can A/B base-vs-finetuned on the "
@@ -358,6 +532,13 @@ def main():
     if args.final_frozen is None:
         args.final_frozen = args.freeze_bottom
 
+    # garystafford has NO per-speaker real/clone pairing -> LOSO is impossible.
+    # Force the plain-train/test-split path and skip the both-classes-per-speaker guard.
+    if args.data == "garystafford":
+        args.no_loso = True
+        print("[data-mode] garystafford: forced plain train/test split (no LOSO because "
+              "real and fake are NOT paired per speaker).")
+
     speakers = gather(args.data_dir)
     if not speakers:
         raise SystemExit(f"No clips found under {args.data_dir}/real or /cloned. "
@@ -370,10 +551,14 @@ def main():
         c_real = sum(1 for _, l in speakers[sp] if l == 0)
         c_fake = sum(1 for _, l in speakers[sp] if l == 1)
         print(f"   - {sp}: real={c_real} cloned={c_fake}")
-    check_speaker_classes(speakers)
+    # Both-classes-per-speaker guard applies ONLY to team data (LOSO needs it). For
+    # garystafford (plain split) the real speakers (yt_*) and fake TTS voices are in
+    # different folders, so the guard would wrongly hard-fail — skip it there.
+    if args.data == "team":
+        check_speaker_classes(speakers)
 
-    # Optional holdout: a speaker kept ENTIRELY out of the final model so we can A/B
-    # base-vs-finetuned on the SAME unseen speaker (see notebook verify cell).
+    # Optional holdout (team mode): a speaker kept ENTIRELY out of the final model so
+    # we can A/B base-vs-finetuned on the SAME unseen speaker (see notebook verify cell).
     holdout_items = []
     if args.holdout:
         if args.holdout not in speakers:
@@ -389,8 +574,10 @@ def main():
 
     all_items = [it for its in speakers.values() for it in its]
     report = {
-        "strategy": f"loso_frozen_{args.loso_frozen}_of_24 / "
-                    f"final_frozen_{args.final_frozen}_of_24{'+ head-only' if args.head_only else ''}",
+        "data_mode": args.data,
+        "strategy": (f"loso_frozen_{args.loso_frozen}_of_24 / "
+                     f"final_frozen_{args.final_frozen}_of_24"
+                     f"{'+ head-only' if args.head_only else ''}"),
         "label_mapping": {"real": 0, "fake": 1},
         "augment_train": args.augment,
         "sampling_rate": sr,
@@ -400,6 +587,57 @@ def main():
         "folds": [], "loso": None,
     }
 
+    os.makedirs(args.out_dir, exist_ok=True)
+
+    # ------------------------- Track A: garystafford (plain split) -------------------------
+    if args.data == "garystafford":
+        train_items, test_items = stratified_split(all_items, args.val_split)
+        print(f"[gs] stratified split: train={len(train_items)} test={len(test_items)} "
+              f"(held-out test {args.val_split:.0%})")
+        # baseline (no fine-tune) on the SAME test set for the "lift" comparison.
+        # Use the UNTOUCHED pretrained model (its own trained 2-class head), NOT
+        # build_model() which resets the head to random init and would give a bogus baseline.
+        base_model = AutoModelForAudioClassification.from_pretrained(args.repo)
+        base_model.eval()
+        base_test = inference_eval(base_model, proc, test_items, sr)
+        report["baseline_test"] = base_test
+        print(f"[gs] baseline (pretrained, no fine-tune) on test: {base_test}")
+        if args.results_csv:
+            log_metrics_row(args, args.results_csv, f"baseline_{args.data}", args.data,
+                            "test", base_test, args.repo, n_clips=len(test_items),
+                            epochs=0, n_freeze=24)
+        del base_model, base_test
+
+        # final model trained on the TRAIN split, evaluated on held-out TEST
+        print("\n=== Training garystafford final model on TRAIN split "
+              f"(frozen {args.final_frozen}/24), eval on TEST ===")
+        ckpt_dir = os.path.join(args.out_dir, "checkpoints")
+        gs_tag = f"gs_frozen{args.final_frozen}"
+        final, final_model = train_once(
+            args.repo, proc, train_items, test_items, sr, args, args.final_frozen,
+            ckpt_dir=ckpt_dir, resume=args.resume, tag=gs_tag,
+        )
+        report["final_train_test"] = {
+            "n_train": len(train_items), "n_test": len(test_items),
+            "n_freeze": args.final_frozen, "train_losses": final["train_losses"],
+        }
+        # inference eval on the held-out TEST (clean, uses classify_metrics incl. AUC)
+        test_metrics = inference_eval(final_model, proc, test_items, sr)
+        report["final_eval_test"] = test_metrics
+        print(f"[gs] fine-tuned on TEST: {test_metrics}")
+        if args.results_csv:
+            log_metrics_row(args, args.results_csv, f"finetuned_{args.data}", args.data,
+                            "test", test_metrics, args.out_dir, n_clips=len(test_items))
+        final_model.save_pretrained(args.out_dir)
+        proc.save_pretrained(args.out_dir)
+        json.dump(report, open(os.path.join(args.out_dir, "finetune_report.json"), "w"),
+                  indent=2)
+        print(f"\nSaved garystafford final model + report -> {args.out_dir}")
+        print("Track A numbers are the 'fine-tuning adapts to corpus' proof, NOT a "
+              "generalization claim (Gustking base already knew these TTS engines).")
+        return
+
+    # ------------------------- Track B: team data (LOSO + holdout) -------------------------
     if not args.no_loso and len(speakers) >= 2:
         # Leave-one-speaker-out: hold out one speaker's real+cloned clips per fold.
         # LOSO folds train ONLY the head (--loso-frozen 24) — fast, and it's a
@@ -420,6 +658,15 @@ def main():
             }
             report["folds"].append(fold)
             print(f"[LOSO] {held}: {fold['eval']}")
+            if args.results_csv:
+                ev = fold["eval"]
+                log_metrics_row(args, args.results_csv, f"loso_fold_{held}", args.data,
+                                "loso_fold",
+                                {"acc": ev.get("eval_acc", ev.get("acc", 0.0)),
+                                 "fpr": ev.get("eval_fpr", 0.0), "fnr": ev.get("eval_fnr", 0.0),
+                                 "roc_auc": 0.0, "precision_real": 0.0, "recall_real": 0.0,
+                                 "f1_real": 0.0, "n": len(test_items)},
+                                args.repo, epochs=args.epochs, n_freeze=args.loso_frozen)
         report["loso"] = summarize_rows(report["folds"])
         report["loso"]["_claim"] = (
             f"LOSO: leave-one-speaker-out CV over ALL {len(names)} speakers, "
@@ -434,6 +681,15 @@ def main():
                 continue
             print(f"   {k}: {v['mean']:.3f} +/- {v['std']:.3f}  "
                   f"(min {v['min']:.3f}, max {v['max']:.3f})")
+        if args.results_csv:
+            m = report["loso"]
+            log_metrics_row(args, args.results_csv, f"loso_{args.data}", args.data,
+                            "loso_aggregate",
+                            {"acc": m["acc"]["mean"], "fpr": m["fpr"]["mean"],
+                             "fnr": m["fnr"]["mean"], "roc_auc": 0.0,
+                             "precision_real": 0.0, "recall_real": 0.0, "f1_real": 0.0,
+                             "n": sum(len(test_items) for _ in names)},
+                            args.repo, epochs=args.epochs, n_freeze=args.loso_frozen)
 
     # Final deployable model: train on ALL (non-holdout) speakers with the FULL recipe
     # (single run, so it can afford unfreezing). This is the checkpoint that ships.
@@ -441,14 +697,18 @@ def main():
         [it for it in all_items if it not in set(holdout_items)]
     print("\n=== Training final model on all speakers "
           f"(frozen {args.final_frozen}/24) — the saved checkpoint ===")
-    eval_for_final = final_items
-    final, final_model = train_once(args.repo, proc, final_items, eval_for_final, sr, args, args.final_frozen)
+    ckpt_dir = os.path.join(args.out_dir, "checkpoints")
+    final, final_model = train_once(
+        args.repo, proc, final_items, final_items, sr, args, args.final_frozen,
+        ckpt_dir=ckpt_dir, resume=args.resume, tag="final",
+    )
     report["final_train_on_all"] = {
         "n_train": len(final_items),
         "n_freeze": args.final_frozen,
         "train_losses": final["train_losses"],
     }
     report["final_eval_train_split"] = final["eval"]
+
 
     # Evaluate the final (fine-tuned) model on the held-out speaker for the A/B slide.
     if holdout_items:
@@ -465,6 +725,9 @@ def main():
         print(f"   'Fine-tuned model on 1 truly-unseen speaker: {hold_eval}")
         print("   (This speaker was still one of the LOSO folds above; here it's a "
               "separate, single-run check on a model that never saw it during training.)")
+        if args.results_csv:
+            log_metrics_row(args, args.results_csv, f"holdout_{args.holdout}", args.data,
+                            "holdout", hold_eval, args.out_dir, n_clips=len(holdout_items))
 
     os.makedirs(args.out_dir, exist_ok=True)
     final_model.save_pretrained(args.out_dir)

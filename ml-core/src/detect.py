@@ -89,13 +89,21 @@ class DetectionEngine:
     def analyze_audio(self, path_or_bytes, context=None):
         """Full analysis of one clip/file. Returns risk score + signal breakdown."""
         import audio_utils
+        wav, sr = audio_utils.load_audio(path_or_bytes)
+        return self.score_audio(wav, sr, context=context)
+
+    def score_audio(self, wav, sr, context=None):
+        """Full analysis of an in-memory waveform (numpy float32 array + sample rate).
+
+        This is the core scoring path; `analyze_audio` loads audio from a path/bytes
+        then delegates here. The live demo (mic capture) calls this directly with the
+        recorded buffer, avoiding a disk round-trip. Returns the same dict shape.
+        """
         from prosody import extract_prosody, prosody_anomaly_score
         from voiceprint import Voiceprint
 
-        wav, sr = audio_utils.load_audio(path_or_bytes)
-
         conf = self._model_confidence(wav, sr)          # 0..1 (1 = fake)
-        pros_feat = extract_prosody(path_or_bytes)
+        pros_feat = extract_prosody((wav, sr))
         pros_anom = prosody_anomaly_score(pros_feat)
 
         # voiceprint: default = no enrollment -> neutral (0.5 risk contribution)
@@ -103,7 +111,7 @@ class DetectionEngine:
         if context and context.get("enrolled_embedding") is not None:
             try:
                 vp = Voiceprint()
-                emb = vp.embed(path_or_bytes)
+                emb = vp.embed((wav, sr))
                 sim, _ = vp.is_match(emb, {"embedding": context["enrolled_embedding"]})
                 # low similarity to a "known" number => higher risk
                 vp_contrib = 1.0 - sim

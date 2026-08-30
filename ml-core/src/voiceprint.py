@@ -31,11 +31,17 @@ class Voiceprint:
                 )
         return self._encoder
 
-    def embed(self, path_or_bytes):
-        """Return 256-d speaker embedding for an audio clip."""
+    def embed(self, path_or_bytes, sr=16000):
+        """Return 256-d speaker embedding for an audio clip.
+
+        `path_or_bytes` may be a path / raw bytes OR a tuple (wav_array, sr) for
+        in-memory audio (live mic path via score_audio)."""
         from resemblyzer import preprocess_wav
         import audio_utils
-        wav, sr = audio_utils.load_audio(path_or_bytes)
+        if isinstance(path_or_bytes, tuple):
+            wav, sr = path_or_bytes
+        else:
+            wav, sr = audio_utils.load_audio(path_or_bytes)
         if sr != 16000:
             import librosa
             wav = librosa.resample(wav, orig_sr=sr, target_sr=16000)

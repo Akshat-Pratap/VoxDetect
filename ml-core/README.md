@@ -81,6 +81,10 @@ eng = DetectionEngine()                    # loads model ONCE; keep it alive in 
 
 # Batch / file mode
 result = eng.analyze_audio("clip.wav", context=None)
+
+# In-memory mode (live demo / real-time mic capture)
+wav, sr = audio_utils.load_audio("clip.wav")      # or a raw numpy buffer
+result = eng.score_audio(wav, sr, context=None)   # same fusion as analyze_audio
 # -> {
 #      "risk_score": 0..100,
 #      "band": "low" | "medium" | "high",
@@ -99,7 +103,7 @@ Other modules (all under `src/`):
 - `audio_utils.py`  — load/`preprocess`/`chunk` any audio → 16kHz mono
 - `voiceprint.py`   — speaker embedding (`Voiceprint`), cosine similarity, enroll/match
 - `prosody.py`      — `extract_prosody` (pitch/pause/speaking-rate proxy) + `prosody_anomaly_score`
-- `evaluate.py`     — accuracy/FPR harness. use `--out results/<name>.json` to save a run
+- `evaluate.py`     — accuracy/FPR/FNR/ROC-AUC + precision/recall/F1 harness. use `--out` to save a run, `--results <csv>` to append to the source-of-truth table
 - `validate.py`     — first-run sanity check (label mapping + risk-score expectations)
 
 ---
@@ -115,11 +119,14 @@ Other modules (all under `src/`):
 | `notebooks/sprint2_*.ipynb` | Hindi / multilingual test |
 | `notebooks/sprint3_*.ipynb` | Fine-tune the classification head on your data (keep backbone) |
 | `notebooks/clone_voice_xtts.ipynb` | Team: generate cloned clips free (Coqui XTTS-v2, no account) |
+| `notebooks/live_demo.ipynb` | Live real-time demo: mic real voice + team clone clip + numbers footer |
 | `src/*.py`   | The importable modules + evaluate/validate harnesses |
-| `scripts/`   | upload/organize_dataset.py + finetune_head.py |
-| `results/.gitkeep` | Repo tracks the folder shape; real JSONs live on Drive |
-| Drive: `.../ml-core/results` | Unique per-run JSON outputs (durable, not in git) |
-| Drive: `.../ml-core/checkpoints/ft_head_v1` | Fine-tuned head (created by sprint3) |
+| `src/results_tracking.py` | Folium-style source-of-truth CSV row logger (metrics + dataset + checkpoint) |
+| `src/detect.py` | `analyze_audio(path)` **and** `score_audio(wav, sr)` (in-memory, for live mic) |
+| `scripts/`   | upload/organize_dataset.py + finetune_head.py + prepare_garystafford.py |
+| `results/.gitkeep` | Repo tracks the folder shape; real JSONs/CSV live on Drive |
+| Drive: `.../ml-core/results` | Unique per-run JSON **and** `ablation_results.csv` (durable, not in git) |
+| Drive: `.../ml-core/checkpoints/ft_head_v1` | Fine-tuned head (+ per-epoch + `best_<tag>` checkpoints, created by sprint3/finetune) |
 | Drive: `.../ml-core/dataset` | test_data.zip archive + manifest (durable, not in git) |
 
 ---
