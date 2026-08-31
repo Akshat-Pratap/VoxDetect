@@ -75,6 +75,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import (
     AutoFeatureExtractor,
     AutoModelForAudioClassification,
+    DataCollatorWithPadding,
     TrainingArguments,
     Trainer,
 )
@@ -192,7 +193,7 @@ class AudioDS(Dataset):
         wav = load_wav(path, self.sr)
         if self.augment:
             wav = augment(wav, self.sr, rng=self.rng)
-        feats = self.proc(wav, sampling_rate=self.sr, return_tensors="pt", padding=True)
+        feats = self.proc(wav, sampling_rate=self.sr, return_tensors="pt")
         return {IMG_KEY: feats[IMG_KEY][0], "labels": label, "path": path}
 
 
@@ -238,7 +239,8 @@ def freeze_head(model, n_freeze=12):
     return model
 
 
-def compute_metrics(metrics, items):
+def compute_metrics(metrics):
+    """Trainer compute_metrics — receives an EvalPrediction (metrics.predictions/label_ids)."""
     preds = np.argmax(metrics.predictions, axis=-1)
     labels = metrics.label_ids
     return {
@@ -298,6 +300,9 @@ def train_once(repo, proc, train_items, test_items, sr, args, n_freeze,
         args=train_args,
         train_dataset=train_ds,
         eval_dataset=test_ds,
+        data_collator=DataCollatorWithPadding(
+            tokenizer=proc, padding="longest", return_tensors="pt"
+        ),
         compute_metrics=compute_metrics,
     )
     trainer.train(resume_from_checkpoint=resume if (resume and os.path.isdir(resume)) else None)
