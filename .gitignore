@@ -41,3 +41,31 @@ ml-core/learn.md
 plan.md
 AGILE_SPRINTS.md
 
+# ── Backend (P2) ──────────────────────────────────────────────────────────────
+
+# Virtual environment (local dev only — never committed)
+backend/.venv/
+
+# Environment secrets
+backend/.env
+
+# SQLite database files
+backend/data/*.db
+backend/data/*.sqlite3
+backend/data/*.sqlite
+
+# Python cache
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/**/*.pyo
+
+# Pytest cache and output
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# Logs and temp audio processing artifacts
+backend/logs/
+backend/tmp/
+backend/temp/

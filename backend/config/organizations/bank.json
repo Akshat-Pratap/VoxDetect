@@ -1,0 +1,19 @@
+{
+  "organization": "bank",
+  "thresholds": {
+    "low_max": 25,
+    "medium_max": 60,
+    "high_min": 60,
+    "critical_min": 85
+  },
+  "actions": {
+    "low": "No action required. Transaction may proceed.",
+    "medium": "Request secondary authentication before authorising transaction.",
+    "high": "Perform independent callback to registered number and verify identity.",
+    "critical": "Freeze sensitive transaction. Perform MFA and independent callback immediately."
+  },
+  "webhook": {
+    "url": null,
+    "trigger_on": ["high", "critical"]
+  }
+}

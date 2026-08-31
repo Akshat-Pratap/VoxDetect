@@ -1,0 +1,19 @@
+{
+  "organization": "government",
+  "thresholds": {
+    "low_max": 20,
+    "medium_max": 55,
+    "high_min": 55,
+    "critical_min": 80
+  },
+  "actions": {
+    "low": "No action required. Continue processing.",
+    "medium": "Initiate secondary biometric or document verification.",
+    "high": "Escalate to supervisor. Perform voice + identity re-verification via secure channel.",
+    "critical": "Immediately suspend session. Alert security team. Do not share any sensitive data."
+  },
+  "webhook": {
+    "url": null,
+    "trigger_on": ["medium", "high", "critical"]
+  }
+}
