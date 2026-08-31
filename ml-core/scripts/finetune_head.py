@@ -640,7 +640,7 @@ def main():
         # final model trained on the TRAIN split, evaluated on held-out TEST
         print("\n=== Training garystafford final model on TRAIN split "
               f"(frozen {args.final_frozen}/24), eval on TEST ===")
-        ckpt_dir = os.path.join(args.out_dir, "checkpoints")
+        ckpt_dir = args.out_dir  # train_once appends the single /checkpoints level
         gs_tag = f"gs_frozen{args.final_frozen}"
         final, final_model = train_once(
             args.repo, proc, train_items, test_items, sr, args, args.final_frozen,
@@ -726,7 +726,7 @@ def main():
         [it for it in all_items if it not in set(holdout_items)]
     print("\n=== Training final model on all speakers "
           f"(frozen {args.final_frozen}/24) — the saved checkpoint ===")
-    ckpt_dir = os.path.join(args.out_dir, "checkpoints")
+    ckpt_dir = args.out_dir  # train_once appends the single /checkpoints level
     final, final_model = train_once(
         args.repo, proc, final_items, final_items, sr, args, args.final_frozen,
         ckpt_dir=ckpt_dir, resume=args.resume, tag="final",
