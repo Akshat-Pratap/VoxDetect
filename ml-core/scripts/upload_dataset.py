@@ -66,9 +66,10 @@ def _upload_zip(root, upload_dir, name=ARCHIVE):
     zip_path = root / f".{name}"   # build a temp archive inside root to avoid self-including
     zip_path = root.parent / name
 
+    _SKIP = ("README.md", "test_data.zip", "test_data.zip.manifest.json")
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in sorted(root.rglob("*")):
-            if p.is_file() and p.name in ("README.md",):
+            if p.is_file() and p.name in _SKIP:
                 continue
             if p.is_file():
                 zf.write(p, p.relative_to(root).as_posix())
@@ -119,7 +120,7 @@ def main():
     zip_path = root.parent / "test_data.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
         for p in sorted(root.rglob("*")):
-            if p.is_file() and p.name == "README.md":
+            if p.is_file() and p.name in ("README.md", "test_data.zip", "test_data.zip.manifest.json"):
                 continue
             if p.is_file():
                 zf.write(p, p.relative_to(root).as_posix())
