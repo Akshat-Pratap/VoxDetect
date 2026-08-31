@@ -85,6 +85,15 @@ def _make_null_result() -> NormalisedResult:
     }
 
 
+def _safe_float(val: Any) -> float | None:
+    if val is None:
+        return None
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return None
+
+
 def _normalise(raw: dict[str, Any]) -> NormalisedResult:
     """
     Convert a raw P1 result dict into the stable backend representation.
@@ -104,21 +113,21 @@ def _normalise(raw: dict[str, Any]) -> NormalisedResult:
     """
     models = raw.get("models") or {}
     signals = raw.get("signals") or {}
-    synthetic_prob = models.get("synthetic_prob")
+    synthetic_prob = _safe_float(models.get("synthetic_prob"))
 
     return {
-        "risk_score": raw.get("risk_score"),
-        "band": raw.get("band"),
+        "risk_score": _safe_float(raw.get("risk_score")),
+        "band": str(raw.get("band")) if raw.get("band") is not None else None,
         # confidence = synthetic_prob from the deepfake model
         "confidence": synthetic_prob,
         "models": {
             "synthetic_prob": synthetic_prob,
         },
         "signals": {
-            "model": signals.get("model"),
-            "prosody_anomaly": signals.get("prosody_anomaly"),
-            "voiceprint_risk": signals.get("voiceprint_risk"),
-            "context_risk": signals.get("context_risk"),
+            "model": _safe_float(signals.get("model")),
+            "prosody_anomaly": _safe_float(signals.get("prosody_anomaly")),
+            "voiceprint_risk": _safe_float(signals.get("voiceprint_risk")),
+            "context_risk": _safe_float(signals.get("context_risk")),
         },
     }
 
@@ -189,14 +198,23 @@ class MLService:
                 checkpoint=checkpoint,
             )
 
-            # Also cache the Voiceprint class for enrollment
+            # Also cache and adapt the Voiceprint class for enrollment
+            import torch
             from voiceprint import Voiceprint  # type: ignore[import]
 
+            _orig_vp_init = Voiceprint.__init__
+
+            def _safe_vp_init(vp_self, vp_device="auto"):
+                if vp_device == "auto" or not vp_device:
+                    vp_device = "cuda" if torch.cuda.is_available() else "cpu"
+                _orig_vp_init(vp_self, device=vp_device)
+
+            Voiceprint.__init__ = _safe_vp_init
             self._voiceprint_cls = Voiceprint
 
             elapsed = (time.perf_counter() - t0) * 1000
             logger.info(
-                "MLService: DetectionEngine ready in %.0f ms", elapsed
+                "MLService: DetectionEngine and Voiceprint ready in %.0f ms", elapsed
             )
             self._available = True
 

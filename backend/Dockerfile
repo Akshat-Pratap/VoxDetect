@@ -17,11 +17,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Install OS-level dependencies needed for some audio processing libs
-# (libsndfile for soundfile, ffmpeg for broader audio format support)
+# Install OS-level dependencies needed for audio processing libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libsndfile1 \
     ffmpeg \
+    build-essential \
  && rm -rf /var/lib/apt/lists/*
 
 # Install backend Python dependencies
