@@ -106,6 +106,11 @@ No other backend file imports P1 code.
 To enable real ML inference, also install the P1 dependencies:
 
 ```bash
+# On Linux / macOS:
+pip install -r ../ml-core/requirements.txt
+
+# On Windows:
+pip install webrtcvad-wheels
 pip install -r ../ml-core/requirements.txt
 ```
 

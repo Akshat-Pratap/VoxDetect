@@ -12,6 +12,8 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from starlette.testclient import TestClient
+
 from tests.conftest import MOCK_ML_RESULT
 
 
@@ -28,49 +30,31 @@ def _make_wav(n: int = 8000) -> bytes:
 WAV_CHUNK = _make_wav(16000 * 2)  # 2 seconds
 
 
-@pytest.mark.asyncio
-async def test_websocket_connection(test_app):
+def test_websocket_connection(test_app):
     """Client can connect and receive a 'ready' frame after sending metadata."""
-    try:
-        from httpx_ws import aconnect_ws
-    except ImportError:
-        pytest.skip("httpx-ws not installed — skipping WebSocket test")
+    client = TestClient(test_app)
+    with client.websocket_connect("/v1/stream") as ws:
+        # Send metadata
+        ws.send_text(json.dumps({"org": "enterprise"}))
 
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app), base_url="http://test"
-    ) as client:
-        async with aconnect_ws("/v1/stream", client) as ws:
-            # Send metadata
-            await ws.send_text(json.dumps({"org": "enterprise"}))
-
-            # Receive ready frame
-            raw = await asyncio.wait_for(ws.receive_text(), timeout=5.0)
-            data = json.loads(raw)
-            assert data["type"] == "ready"
-            assert "connection_id" in data
+        # Receive ready frame
+        data = ws.receive_json()
+        assert data["type"] == "ready"
+        assert "connection_id" in data
 
 
-@pytest.mark.asyncio
-async def test_websocket_invalid_metadata(test_app):
+def test_websocket_invalid_metadata(test_app):
     """Invalid metadata frame → error response, connection stays open."""
-    try:
-        from httpx_ws import aconnect_ws
-    except ImportError:
-        pytest.skip("httpx-ws not installed")
-
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app), base_url="http://test"
-    ) as client:
-        async with aconnect_ws("/v1/stream", client) as ws:
-            # Send broken JSON
-            await ws.send_text("not valid json {{{")
-            raw = await asyncio.wait_for(ws.receive_text(), timeout=5.0)
-            data = json.loads(raw)
-            assert data["type"] == "error"
+    client = TestClient(test_app)
+    with client.websocket_connect("/v1/stream") as ws:
+        # Send broken JSON
+        ws.send_text("not valid json {{{")
+        data = ws.receive_json()
+        assert data["type"] == "error"
+        assert data["code"] == "INVALID_METADATA"
 
 
-@pytest.mark.asyncio
-async def test_rolling_risk_logic():
+def test_rolling_risk_logic():
     """Rolling window correctly smooths risk scores."""
     from collections import deque
     import statistics
@@ -89,14 +73,8 @@ async def test_rolling_risk_logic():
     assert roll_range <= raw_range
 
 
-@pytest.mark.asyncio
-async def test_streaming_service_handles_ml_error(test_app):
+def test_streaming_service_handles_ml_error(test_app):
     """MLService error for a chunk → error frame sent, connection continues."""
-    try:
-        from httpx_ws import aconnect_ws
-    except ImportError:
-        pytest.skip("httpx-ws not installed")
-
     from app.services.ml_service import MLServiceError
 
     original = test_app.state.ml_service._sync_analyze_bytes
@@ -104,16 +82,15 @@ async def test_streaming_service_handles_ml_error(test_app):
         side_effect=MLServiceError("Forced failure")
     )
 
-    async with AsyncClient(
-        transport=ASGITransport(app=test_app), base_url="http://test"
-    ) as client:
-        async with aconnect_ws("/v1/stream", client) as ws:
-            await ws.send_text(json.dumps({"org": "enterprise"}))
-            await asyncio.wait_for(ws.receive_text(), timeout=5.0)  # ready
+    client = TestClient(test_app)
+    with client.websocket_connect("/v1/stream") as ws:
+        ws.send_text(json.dumps({"org": "enterprise"}))
+        ready_data = ws.receive_json()
+        assert ready_data["type"] == "ready"
 
-            await ws.send_bytes(WAV_CHUNK)
-            raw = await asyncio.wait_for(ws.receive_text(), timeout=10.0)
-            data = json.loads(raw)
-            assert data["type"] == "error"
+        ws.send_bytes(WAV_CHUNK)
+        data = ws.receive_json()
+        assert data["type"] == "error"
+        assert data["code"] == "ML_ERROR"
 
     test_app.state.ml_service._sync_analyze_bytes = original
