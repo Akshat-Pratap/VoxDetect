@@ -199,6 +199,17 @@ def main():
         n_fake = sum(1 for r in rows if r["true_fake"])
         best_fn = sum(1 for r in rows if r["true_fake"] and r["score"] < best["thr"])
         best_fn = best_fn / n_fake if n_fake else 0.0
+        # Classification metrics recomputed AT the best cutoff (the earlier tp/tn/fp/fn
+        # and p_real etc. were at the DEFAULT threshold 70, which is inconsistent with the
+        # chosen cutoff). Recompute so precision/recall/f1/confusion all match best.thr.
+        bt = best["thr"]
+        best_tp = sum(1 for r in rows if r["true_fake"] and r["score"] >= bt)
+        best_tn = sum(1 for r in rows if (not r["true_fake"]) and r["score"] < bt)
+        best_p = sum(1 for r in rows if not r["true_fake"])
+        best_pred_pos = sum(1 for r in rows if r["score"] >= bt)
+        best_prec = best_tp / best_pred_pos if best_pred_pos else 0.0
+        best_rec = best_tp / (n_fake if n_fake else 1)
+        best_f1 = (2 * best_prec * best_rec / (best_prec + best_rec)) if (best_prec + best_rec) else 0.0
         log_csv({"acc": best["acc"], "fpr": best["fpr"], "fnr": best_fn}, best["thr"])
         find_payload = {"mode": "find-threshold", "best": {k: round(v, 4) for k, v in best.items()}}
         # Emit a NORMALISED top-level summary too (ACC/FPR/FNR at the best cutoff), so
@@ -211,10 +222,10 @@ def main():
             "fpr": round(best["fpr"], 4),
             "fnr": round(best_fn, 4),
             "roc_auc": round(roc_auc, 4),
-            "precision_real": round(p_real, 4),
-            "recall_real": round(r_real, 4),
-            "f1_real": round(f1_real, 4),
-            "confusion": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
+            "precision_real": round(best_prec, 4),
+            "recall_real": round(best_rec, 4),
+            "f1_real": round(best_f1, 4),
+            "confusion": {"tp": best_tp, "fp": best_pred_pos - best_tp, "tn": best_tn, "fn": best_fn * (n_fake or 1)},
             "src_root": args.root,
             "dataset": args.dataset,
             "variant": args.variant,
