@@ -204,7 +204,7 @@ class AudioDS(Dataset):
         if self.augment:
             wav = augment(wav, self.sr, rng=self.rng)
         feats = self.proc(wav, sampling_rate=self.sr, return_tensors="pt")
-        return {IMG_KEY: feats[IMG_KEY][0], "labels": label, "path": path}
+        return {IMG_KEY: feats[IMG_KEY][0], "labels": label}
 
 
 def build_model(repo):
