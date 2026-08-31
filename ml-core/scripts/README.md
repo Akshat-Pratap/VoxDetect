@@ -150,6 +150,16 @@ Use **`notebooks/clone_voice_xtts.ipynb`** (Coqui XTTS-v2, open-source, free, ru
 Colab). Each team member opens it, uploads ONE ~10-20s real clip as their reference voice,
 and generates cloned clips of the SAME sentences in English + Hindi.
 
+**Reference format:** uploads may be `.wav`, `.m4a`, `.aac`, or `.mp3` — cell 1 auto-converts
+the two reference clips to 22050 Hz mono PCM WAV (XTTS's expected `speaker_wav` format).
+
+**Real-clip conversion:** cell 5 converts all 6 phone recordings to WAV and names them
+`real_english_01..03.wav` / `real_hindi_01..03.wav` under `/content/real_recs/<YOUR_NAME>/<lang>/`.
+Language is auto-detected from the filename number (1-3 English, 4-6 Hindi) or falls back
+to upload order (first 3 English, then 3 Hindi). Files are sorted by sentence index within
+each language and the plan is shown for confirmation before writing. This folder is copied
+locally one-per-person, then pushed to the shared Drive `real/<lang>/<YOUR_NAME>/` tree.
+
 **Why XTTS-v2 and not ElevenLabs/PlayHT free:** as of 2026 the hosted free tiers no longer
 include instant voice cloning (they need the paid tier or a card), and quotas/daily limits
 are a lottery on a Sunday night. XTTS-v2 has no signup, no paywall, and — important for a
