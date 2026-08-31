@@ -69,3 +69,7 @@ backend/htmlcov/
 backend/logs/
 backend/tmp/
 backend/temp/
+
+# Dataset archive packaged locally for manual Drive upload (not for git)
+test_data.zip
+test_data.zip.manifest.json
