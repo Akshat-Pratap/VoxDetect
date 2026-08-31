@@ -1,0 +1,23 @@
+/**
+ * src/pages/NotFound.tsx
+ */
+import React from 'react';
+import { Link } from 'react-router-dom';
+import { ShieldAlert, Home } from 'lucide-react';
+
+export function NotFound() {
+  return (
+    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+      <div className="w-14 h-14 rounded-full bg-bg-surface flex items-center justify-center text-text-muted">
+        <ShieldAlert className="w-7 h-7" />
+      </div>
+      <h1 className="text-2xl font-bold text-text-primary">404 — Page Not Found</h1>
+      <p className="text-xs text-text-secondary max-w-sm">
+        The requested monitoring view does not exist or has been relocated.
+      </p>
+      <Link to="/" className="btn btn-primary btn-sm flex items-center gap-2">
+        <Home className="w-4 h-4" /> Return to Dashboard
+      </Link>
+    </div>
+  );
+}

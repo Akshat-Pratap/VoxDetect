@@ -1,0 +1,408 @@
+<!DOCTYPE html><html class="light" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>VoiceGuard AI - Live Call Monitoring</title>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#b71422",
+                        "secondary-fixed-dim": "#ffb3ae",
+                        "primary-container": "#1c1b1b",
+                        "on-primary-container": "#858383",
+                        "on-secondary-container": "#fffbff",
+                        "primary": "#000000",
+                        "secondary-container": "#db3237",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-highest": "#e1e3e4",
+                        "primary-fixed": "#e5e2e1",
+                        "surface": "#f8f9fa",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-tint": "#5f5e5e",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-secondary-fixed": "#410004",
+                        "on-tertiary-container": "#00984e",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#6bfe9c",
+                        "secondary-fixed": "#ffdad7",
+                        "outline-variant": "#c4c7c7",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed-variant": "#930014",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f3f4f5",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#00210c",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#4ae183",
+                        "on-surface-variant": "#444748",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "inverse-primary": "#c8c6c5",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-fixed": "#1c1b1b",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-md": "24px",
+                        "base": "8px",
+                        "container-padding": "32px",
+                        "margin-lg": "48px",
+                        "card-gap": "16px",
+                        "gutter": "24px",
+                        "margin-sm": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+        .ambient-shadow { box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.03); }
+        .micro-border { border: 1px solid var(--tw-colors-outline-variant); }
+        
+        /* Pulse Animation for Live Indicator */
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+        .live-pulse::before {
+            content: '';
+            position: absolute;
+            left: -4px; top: -4px; right: -4px; bottom: -4px;
+            border-radius: 50%;
+            background-color: var(--tw-colors-secondary);
+            animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased h-screen overflow-hidden flex">
+<!-- Side Navigation -->
+<nav class="w-60 h-screen fixed left-0 top-0 border-r border-outline-variant bg-white flex flex-col py-6 px-4 z-20">
+<!-- Brand Header -->
+<div class="mb-12 px-2 flex items-center gap-3"><div class="flex items-center gap-3">
+    <div class="w-8 h-8 rounded bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-primary text-xl">security</span>
+    </div>
+    <div class="flex flex-col">
+        <h1 class="font-headline-md text-lg font-bold text-primary tracking-tight leading-none">VoiceGuard AI</h1>
+        <span class="text-[10px] font-label-sm text-on-surface-variant uppercase tracking-widest mt-0.5">Enterprise Security</span>
+    </div>
+</div></div>
+<!-- Navigation Links -->
+<div class="flex-1 space-y-6 overflow-y-auto px-2">
+  <!-- MONITOR SECTION -->
+  <div>
+    <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2 px-3">Monitor</h3>
+    <ul class="space-y-1">
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">grid_view</span>
+          <span class="font-label-md text-label-md">Overview</span>
+        </a>
+      </li>
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-[#EEF2FF] text-[#4F46E5] font-bold transition-colors"><span class="material-symbols-outlined text-[20px]" data-icon="show_chart">show_chart</span>
+          
+          <span class="font-label-md text-label-md">Live Calls</span>
+        </a>
+      </li>
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">waves</span>
+          <span class="font-label-md text-label-md">Voiceprints</span>
+        </a>
+      </li>
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">notifications</span>
+          <span class="font-label-md text-label-md">Alerts</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- INTELLIGENCE SECTION -->
+  <div>
+    <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2 px-3">Intelligence</h3>
+    <ul class="space-y-1">
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">bar_chart</span>
+          <span class="font-label-md text-label-md">Analytics</span>
+        </a>
+      </li>
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">corporate_fare</span>
+          <span class="font-label-md text-label-md">Organizations</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <!-- DEVELOPER SECTION -->
+  <div>
+    <h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2 px-3">Developer</h3>
+    <ul class="space-y-1">
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">power</span>
+          <span class="font-label-md text-label-md">API / Integration</span>
+        </a>
+      </li>
+      <li class="">
+        <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+          <span class="material-symbols-outlined text-[20px]">settings</span>
+          <span class="font-label-md text-label-md">Settings</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+<!-- Bottom Actions -->
+<div class="mt-auto space-y-4 pt-4 border-t border-outline-variant"><ul class="space-y-1 px-2">
+  <li class="">
+    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors">
+      <span class="material-symbols-outlined text-[20px]">help</span>
+      <span class="font-label-md text-label-md">Help Center</span>
+    </a>
+  </li>
+  <li class="">
+    <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors"><img src="https://lh3.googleusercontent.com/aida/AEtjO1XFo6VoeQ_MGckdMmBUXpT3JnYL1NzMertNQy8Pqsxs7sOpze18NR4TrEhNXRK9MCPU7xgnFA8EmhWObAnP6OuHFjB8eSpXsoGh0SSjTmfQZxvR6f0iG3tIZ8kkFK7UZ-6ySSkf0b1AtTypRqlsfKZxW31LktMmWFyyaWyjz5jUj46Wh9Ryhib5Fc5D0yBZBDVy_tlvTaI80RYXm2V_UwUVkTCMyCDhk4bPNCAnQI3_YNCL1aWVUNCI1qM" alt="Live Calls Icon" class="w-5 h-5 object-cover shrink-0">
+      <span class="material-symbols-outlined text-[20px]">logout</span>
+      <span class="font-label-md text-label-md">Log Out</span>
+    </a>
+  </li>
+</ul></div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 ml-60 flex flex-col h-screen">
+<!-- Top App Bar -->
+<header class="h-16 flex justify-between items-center px-8 w-full border-b border-outline-variant dark:border-outline bg-surface dark:bg-surface-container-low shrink-0 z-10 relative">
+<div class="flex-1 flex items-center">
+<!-- Search could go here -->
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined">dark_mode</span></button>
+<button class="p-2 text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors"><span class="material-symbols-outlined">apps</span></button>
+<div class="w-8 h-8 rounded-full bg-primary-container overflow-hidden ml-2 cursor-pointer border border-outline-variant">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="A professional corporate headshot of a software administrator in a modern, well-lit office setting. High contrast, sharp focus, bright light-mode aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD43ziKhUBSwXAQN5GCoJ7dhdR8-mqsBJBFnfYY7hawq67t7X4PZZ-ITeEzBsZvWddJYARdfmdjcyYLeY6kR1qZEsD1TAGpSEPQU56AZxlsldXr6heo3vgQBYwWiAAwxNRL3w73VPNZ_dg0Mx5mySZwcsf8N3NNPQRgWD631aeoMBaMavbGzyIsTclhUgZQ2K7Zx_QIcKWOaFtd1jGLJJLDTM1KTL9s9c6Dhc3nGoGvvX6PwZsAe5U1">
+</div>
+</div>
+</header>
+<!-- Dashboard Canvas -->
+<main class="flex-1 overflow-y-auto p-container-padding bg-background">
+<div class="max-w-[1440px] mx-auto">
+<!-- Page Header: Live Interception -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-margin-md gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<div class="relative w-3 h-3 rounded-full bg-secondary live-pulse"></div>
+<span class="font-label-sm text-label-sm text-secondary uppercase tracking-wider">Live Interception Active</span>
+</div>
+<h2 class="font-display-lg text-display-lg text-primary">Call ID #VG-8829-X</h2>
+<p class="font-body-lg text-body-lg text-on-surface-variant mt-1">External Route → Internal Sales Engineering</p>
+</div>
+<div class="flex items-center gap-4 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant ambient-shadow">
+<div class="text-right">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase">Duration</p>
+<p class="font-headline-md text-headline-md text-primary font-mono" id="call-timer">21:59</p>
+</div>
+<button class="px-4 py-2 bg-secondary text-on-error font-label-md text-label-md rounded-lg hover:bg-secondary-container transition-colors shadow-sm">Terminate Call</button>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Top Row: Waveform & Gauge -->
+<div class="col-span-12 lg:col-span-8 bg-surface-container-lowest rounded-xl border border-outline-variant p-margin-md ambient-shadow flex flex-col">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">graphic_eq</span> Real-Time Audio Signal Analysis
+                            </h3>
+<span class="px-2 py-1 bg-surface-container rounded font-label-sm text-label-sm text-on-surface-variant uppercase">Channel 1 (External)</span>
+</div>
+<div class="flex-1 relative min-h-[240px] w-full bg-surface-container-lowest rounded-lg border border-outline-variant overflow-hidden flex items-center justify-center">
+<!-- Placeholder for animated waveform -->
+<div class="absolute inset-0 opacity-20" style="background-image: repeating-linear-gradient(90deg, transparent, transparent 19px, var(--tw-colors-outline-variant) 19px, var(--tw-colors-outline-variant) 20px);"></div>
+<div class="w-full h-32 flex items-center justify-center gap-1 px-4 z-10" id="waveform-container">
+<!-- Bars injected by JS -->
+<div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 18.245px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 35.4577px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 16.8482px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 14.4046px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 16.0574px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 32.9318px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 11.6614px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 27.4142px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 16.6601px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 32.3166px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 34.7183px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 33.4133px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 21.3459px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 15.9724px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 27.4212px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 14.4379px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 20.0799px;"></div><div class="w-1.5 bg-primary/60 rounded-full transition-all duration-75 ease-in-out" style="height: 50.6259px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 10.6275px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 29.9477px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 23.9594px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 13.601px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 19.5266px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 30.7909px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 34.7505px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 27.4701px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 24.0053px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 11.4529px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 37.2177px;"></div><div class="w-1.5 bg-primary/60 rounded-full transition-all duration-75 ease-in-out" style="height: 51.4882px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 25.0992px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 16.9779px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 40.2279px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 14.0253px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 38.493px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 21.8815px;"></div><div class="w-1.5 bg-primary/60 rounded-full transition-all duration-75 ease-in-out" style="height: 58.1027px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 30.3274px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 15.3028px;"></div><div class="w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out" style="height: 30.8492px;"></div></div>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl border border-outline-variant p-margin-md ambient-shadow flex flex-col items-center justify-center text-center">
+<h3 class="font-headline-md text-headline-md text-primary mb-6 w-full text-left">Current Risk Assessment</h3>
+<!-- Circular Gauge -->
+<div class="relative w-48 h-48 mb-4 flex items-center justify-center">
+<svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" r="45" stroke="var(--tw-colors-surface-container-high)" stroke-width="8"></circle>
+<circle class="transition-all duration-1000 ease-out" cx="50" cy="50" fill="none" r="45" stroke="var(--tw-colors-secondary)" stroke-dasharray="283" stroke-dashoffset="42.45" stroke-width="8"></circle> <!-- 85% of 283 -->
+</svg>
+<div class="absolute flex flex-col items-center">
+<span class="font-display-lg text-display-lg text-secondary">85</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">/ 100</span>
+</div>
+</div>
+<div class="mt-2">
+<span class="inline-flex items-center gap-1 px-3 py-1 bg-error-container text-on-error-container rounded-full font-label-md text-label-md font-bold uppercase tracking-wide">
+<span class="material-symbols-outlined text-sm">warning</span> High Severity
+                            </span>
+</div>
+</div>
+<!-- Bottom Row: Trend Line & AI Predictions -->
+<div class="col-span-12 lg:col-span-7 bg-surface-container-lowest rounded-xl border border-outline-variant p-margin-md ambient-shadow">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-primary">Risk Score Trend</h3>
+<div class="flex gap-2">
+<button class="px-3 py-1 rounded border border-outline-variant font-label-sm text-label-sm bg-surface">1M</button>
+<button class="px-3 py-1 rounded border border-outline-variant font-label-sm text-label-sm bg-primary-container text-on-primary-container">Live</button>
+</div>
+</div>
+<div class="w-full h-64 bg-surface rounded-lg border border-outline-variant p-4 flex items-end relative overflow-hidden">
+<!-- Simple CSS based trend line visualization -->
+<div class="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-t from-secondary-fixed-dim/20 to-transparent"></div>
+<svg class="w-full h-full z-10" preserveAspectRatio="none" viewBox="0 0 100 100">
+<polyline class="vector-path" fill="none" points="0,80 10,75 20,85 30,60 40,65 50,40 60,45 70,20 80,25 90,10 100,15" stroke="var(--tw-colors-secondary)" stroke-width="2"></polyline>
+</svg>
+<!-- Grid lines -->
+<div class="absolute inset-0 flex flex-col justify-between opacity-10 pointer-events-none">
+<div class="w-full border-t border-primary"></div>
+<div class="w-full border-t border-primary"></div>
+<div class="w-full border-t border-primary"></div>
+<div class="w-full border-t border-primary"></div>
+</div>
+</div>
+</div>
+<div class="col-span-12 lg:col-span-5 bg-surface-container-lowest rounded-xl border border-outline-variant p-margin-md ambient-shadow flex flex-col">
+<h3 class="font-headline-md text-headline-md text-primary mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">smart_toy</span> AI Model Prediction
+                        </h3>
+<div class="space-y-4 flex-1">
+<!-- Detail Item 1 -->
+<div class="p-4 bg-surface rounded-lg border border-outline-variant">
+<div class="flex justify-between items-start mb-2">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Threat Type</span>
+<span class="font-label-md text-label-md text-secondary font-bold">Deepfake Probability</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-1">
+<div class="bg-secondary h-2 rounded-full" style="width: 92%"></div>
+</div>
+<div class="flex justify-between text-xs text-on-surface-variant mt-1">
+<span class="">Confidence</span>
+<span class="">92.4%</span>
+</div>
+</div>
+<!-- Detail Item 2 -->
+<div class="p-4 bg-error-container/20 rounded-lg border border-secondary/30">
+<div class="flex items-center gap-3 mb-2">
+<span class="material-symbols-outlined text-secondary">record_voice_over</span>
+<span class="font-body-md text-body-md text-primary font-bold">Voice Cloning Detected</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant text-sm">Acoustic fingerprint mismatch with enrolled baseline for "John Doe". Spectral anomalies detected in high-frequency bands.</p>
+</div>
+<!-- Detail Item 3 -->
+<div class="p-4 bg-surface rounded-lg border border-outline-variant flex justify-between items-center">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase">Sentiment Analysis</span>
+<span class="px-2 py-1 bg-surface-container rounded font-label-sm text-label-sm text-primary">Highly Urgent / Pressuring</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<!-- Micro-interaction Scripts -->
+<script>
+        // Simulate Waveform
+        const waveformContainer = document.getElementById('waveform-container');
+        const numBars = 40;
+        
+        if(waveformContainer) {
+            for(let i=0; i<numBars; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out';
+                bar.style.height = '4px';
+                waveformContainer.appendChild(bar);
+            }
+
+            setInterval(() => {
+                const bars = waveformContainer.children;
+                for(let i=0; i<bars.length; i++) {
+                    // Random height favoring lower values most of the time, spikes occasionally
+                    let height = Math.random() > 0.8 ? Math.random() * 80 + 20 : Math.random() * 30 + 10;
+                    bars[i].style.height = `${height}px`;
+                    // Color intensity based on height
+                    if(height > 80) {
+                        bars[i].className = 'w-1.5 bg-secondary rounded-full transition-all duration-75 ease-in-out';
+                    } else if (height > 50) {
+                         bars[i].className = 'w-1.5 bg-primary/60 rounded-full transition-all duration-75 ease-in-out';
+                    } else {
+                         bars[i].className = 'w-1.5 bg-primary/20 rounded-full transition-all duration-75 ease-in-out';
+                    }
+                }
+            }, 100);
+        }
+
+        // Simulate Timer
+        let seconds = 262; // 04:22
+        const timerEl = document.getElementById('call-timer');
+        setInterval(() => {
+            seconds++;
+            const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            if(timerEl) timerEl.textContent = `${mins}:${secs}`;
+        }, 1000);
+    </script>
+
+
+</body></html>

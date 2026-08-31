@@ -1,0 +1,368 @@
+<!DOCTYPE html><html lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Voiceprints - VoiceGuard AI</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary": "#b71422",
+                        "secondary-fixed-dim": "#ffb3ae",
+                        "primary-container": "#1c1b1b",
+                        "on-primary-container": "#858383",
+                        "on-secondary-container": "#fffbff",
+                        "primary": "#000000",
+                        "secondary-container": "#db3237",
+                        "surface-variant": "#e1e3e4",
+                        "surface-container-highest": "#e1e3e4",
+                        "primary-fixed": "#e5e2e1",
+                        "surface": "#f8f9fa",
+                        "surface-container-high": "#e7e8e9",
+                        "surface-tint": "#5f5e5e",
+                        "surface-bright": "#f8f9fa",
+                        "surface-container-lowest": "#ffffff",
+                        "on-background": "#191c1d",
+                        "on-primary-fixed-variant": "#474746",
+                        "outline": "#747878",
+                        "on-secondary-fixed": "#410004",
+                        "on-tertiary-container": "#00984e",
+                        "on-primary": "#ffffff",
+                        "tertiary-fixed": "#6bfe9c",
+                        "secondary-fixed": "#ffdad7",
+                        "outline-variant": "#c4c7c7",
+                        "tertiary": "#000000",
+                        "on-secondary-fixed-variant": "#930014",
+                        "on-tertiary-fixed-variant": "#005228",
+                        "on-tertiary-fixed": "#00210c",
+                        "surface-container-low": "#f3f4f5",
+                        "on-error": "#ffffff",
+                        "tertiary-container": "#00210c",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed-dim": "#4ae183",
+                        "on-surface-variant": "#444748",
+                        "surface-dim": "#d9dadb",
+                        "on-secondary": "#ffffff",
+                        "on-surface": "#191c1d",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f8f9fa",
+                        "surface-container": "#edeeef",
+                        "inverse-primary": "#c8c6c5",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "error-container": "#ffdad6",
+                        "on-error-container": "#93000a",
+                        "inverse-surface": "#2e3132",
+                        "on-primary-fixed": "#1c1b1b",
+                        "inverse-on-surface": "#f0f1f2"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-md": "24px",
+                        "base": "8px",
+                        "container-padding": "32px",
+                        "margin-lg": "48px",
+                        "card-gap": "16px",
+                        "gutter": "24px",
+                        "margin-sm": "16px"
+                    },
+                    "fontFamily": {
+                        "label-sm": ["Hanken Grotesk"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-md": ["Hanken Grotesk"],
+                        "headline-lg": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Hanken Grotesk"],
+                        "display-lg": ["Hanken Grotesk"],
+                        "body-lg": ["Hanken Grotesk"],
+                        "label-md": ["Hanken Grotesk"]
+                    },
+                    "fontSize": {
+                        "label-sm": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "36px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Hanken Grotesk', sans-serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background antialiased flex">
+<!-- SideNavBar Component -->
+<nav class="bg-surface-container-lowest w-60 h-screen fixed left-0 top-0 border-r border-outline-variant flex flex-col h-full py-6 px-4 z-20 hidden md:flex">
+<div class="flex items-center gap-3 mb-8 px-2">
+    <div class="w-8 h-8 rounded bg-primary flex items-center justify-center">
+        <span class="material-symbols-outlined text-on-primary text-xl" data-icon="security">security</span>
+    </div>
+    <div>
+        <h1 class="font-headline-md text-lg font-bold text-primary tracking-tight">VoiceGuard AI</h1>
+        <p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider opacity-70">Enterprise Security</p>
+    </div>
+</div>
+<div class="flex-1 overflow-y-auto px-2 space-y-6">
+    <!-- MONITOR SECTION -->
+    <div>
+        <h3 class="px-4 mb-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider opacity-70">Monitor</h3>
+        <div class="space-y-1">
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">grid_view</span>
+                Overview
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md"><span class="material-symbols-outlined text-[20px]" data-icon="show_chart">show_chart</span>
+                Live Calls</a>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-[#eef2ff] text-[#4f46e5] font-semibold transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">fingerprint</span>
+                Voiceprints
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">notifications</span>
+                Alerts
+            </a>
+        </div>
+    </div>
+
+    <!-- INTELLIGENCE SECTION -->
+    <div>
+        <h3 class="px-4 mb-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider opacity-70">Intelligence</h3>
+        <div class="space-y-1">
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">bar_chart</span>
+                Analytics
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">corporate_fare</span>
+                Organizations
+            </a>
+        </div>
+    </div>
+
+    <!-- DEVELOPER SECTION -->
+    <div>
+        <h3 class="px-4 mb-2 font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider opacity-70">Developer</h3>
+        <div class="space-y-1">
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">power</span>
+                API / Integration
+            </a>
+            <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+                <span class="material-symbols-outlined text-[20px]">settings</span>
+                Settings
+            </a>
+        </div>
+    </div>
+</div>
+<div class="mt-auto pt-6 border-t border-outline-variant space-y-1">
+
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">help</span>
+                Help Center
+            </a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-container-high transition-colors font-label-md text-label-md" href="#">
+<span class="material-symbols-outlined">logout</span>
+                Log Out
+            </a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<div class="flex-1 flex flex-col min-h-screen md:ml-60">
+<!-- TopNavBar Component -->
+<header class="bg-surface h-16 fixed top-0 right-0 left-0 md:left-60 border-b border-outline-variant flex justify-between items-center px-8 z-10">
+<div class="flex-1 flex items-center">
+<div class="relative w-96 hidden md:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+<input class="w-full bg-surface-container-low border border-outline-variant rounded-full py-2 pl-10 pr-4 text-body-md font-body-md text-on-surface focus:outline-none focus:ring-1 focus:ring-secondary transition-shadow hover:bg-surface-container-high" placeholder="Search voiceprints, alerts..." type="text">
+</div>
+<div class="md:hidden flex items-center gap-3"><div class="w-8 h-8 shrink-0"><img src="https://lh3.googleusercontent.com/aida-public/AB6AXuCopLU_aI403umbjytDV_NpKcge-aYOhBxg5P9fC3nVzvr3PxP1rHCelB-Ke91bk3CvVIpcMyz9Xu3lSeLQrxmS6tf0A7qQ6_YEBzdFjdOAo6IHR6bPtyv2-t1601nRlBNaDEEddwlex5tf6lCT_LYwEMJsYZlvXv6cwYwAYl43-_cdCShgfNo_I4YrV0lJN4JD_KEhU9dWlEpcblbkrQfniC7yvOHmOmTymGYADw5OXJPEzXsQwOOd" alt="Live Call Logo" class="w-full h-full object-cover rounded-full"></div><span class="font-headline-md text-headline-md font-bold text-primary">VoiceGuard AI</span></div>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined">dark_mode</span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-colors mr-2">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant cursor-pointer ring-1 ring-transparent hover:ring-secondary transition-all">
+<img alt="Administrator Profile" class="w-full h-full object-cover" data-alt="A professional headshot of an administrator in a high-tech corporate environment. The lighting is crisp and modern, featuring cool tones and sharp contrast. The subject is wearing a dark suit against a soft, out-of-focus background of server racks or a modern office space, conveying authority and security expertise." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoGUKnj2oMfjlz1neUDMSj1-moNasvGzJ6X_qEaxxr8sSlEddcloMMKVqnyiAgDhpbzcRPkR4YUNcvG8BCV5095q8OfdYb5IgMXsgvY0QFTqO-GTOh6xZ9KJYVUyN9fQCFIvlAS_n5-r2mXV2oSFa4ehDT7KAu2UoAMqT4bQ8SBdsp8EchxgfLxMd9PRKwEq46To8c6UkXssMsGAuxcd8hWuMNKGguKVg2bnZMEE0Xi48U7KOTrryK">
+</div>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 pt-[88px] px-container-padding pb-container-padding max-w-[1440px] mx-auto w-full">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-margin-md gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background mb-1">Voiceprint Management</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Manage and monitor enrolled biometric audio profiles.</p>
+</div>
+<button class="bg-primary text-on-primary font-label-md text-label-md px-6 py-2.5 rounded-lg hover:bg-opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] w-full md:w-auto">
+<span class="material-symbols-outlined text-[18px]">add</span>
+                    Enroll New Voice
+                </button>
+</div>
+<!-- Management Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-card-gap">
+<!-- Card 1: Victor Vance -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] flex flex-col hover:border-outline transition-colors group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-tertiary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant shrink-0 bg-surface-container-high flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a middle-aged Caucasian male executive named Victor Vance. He has short, styled hair and a confident expression. The lighting is studio-quality, bright and clean, typical of a modern corporate portrait. The background is a stark, minimal white or light grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1GrTei7dj8rSTPYrjtDQX0Rups7-iBiFOtOvAdcgisRmHO88tsX9ZE-6lfYqKSmKbZ2D1_s6dw1IQs6Uxq-v6uwBWctMANdnku9FShzdI9WkZTkxU2Jlwu6T8qspT-FjZdTthyeBr8z6uuejHEn-fgc4lBEnvKeM3AIdjMJ1fy-oPp30ul9IBZjBqvMk36mDaBCSCOND93mf5WpVyibMt8o8vdYZRohP7zXpLf7oL8HnS_dtsj9Kq">
+</div>
+<span class="bg-surface-container-high text-on-background font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase flex items-center gap-1 border border-outline-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim"></span> Enrolled
+                        </span>
+</div>
+<div class="mb-4">
+<h3 class="font-headline-md text-[18px] text-on-background group-hover:text-primary transition-colors">Victor Vance</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant font-mono mt-0.5">ID: VP-8472-A</p>
+</div>
+<div class="space-y-3 flex-1">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Created</span>
+<span class="font-body-md text-[14px] text-on-background">Oct 12, 2023</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Last Match</span>
+<span class="font-body-md text-[14px] text-on-background">2 hrs ago</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Confidence</span>
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-tertiary-fixed-dim w-[98%]"></div>
+</div>
+<span class="font-body-md text-[14px] font-semibold text-on-background">98.2%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: Sarah Chen -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] flex flex-col hover:border-outline transition-colors group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-secondary"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant shrink-0 bg-surface-container-high flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a young Asian female executive named Sarah Chen. She has neat, dark hair and a serious, focused expression. The lighting is crisp and modern, featuring cool tones. The background is a soft, out-of-focus modern office setting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgDqPlOlwdbJyhJzSty3TKAKXihEgohuJKdHAyJhRoAgYs68k34RzgJ1T8O38oZQq2bittsSRjzjmPYR5cKLI_cE2HEsAkh27ASRAt-FmWLezESWW5LtVhv_Ao5E29bf_cZ2zk49xPgfwui4cVs9NTN76IaXP9WppbbVVywnC6_v3k9AA5WXGEJmgKQEQaRQ1xZHtedpGr3xk0PRzxU2KauOViHJm0oFP3xb8ueI5q0Qj4QXlLTp2R">
+</div>
+<span class="bg-[#fce8e8] text-secondary font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase flex items-center gap-1 border border-[#f5c2c2]">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Flagged
+                        </span>
+</div>
+<div class="mb-4">
+<h3 class="font-headline-md text-[18px] text-on-background group-hover:text-primary transition-colors">Sarah Chen</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant font-mono mt-0.5">ID: VP-9102-B</p>
+</div>
+<div class="space-y-3 flex-1">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Created</span>
+<span class="font-body-md text-[14px] text-on-background">Nov 04, 2023</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Last Match</span>
+<span class="font-body-md text-[14px] text-on-background text-secondary font-medium">10 mins ago</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Confidence</span>
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[64%]"></div>
+</div>
+<span class="font-body-md text-[14px] font-semibold text-secondary">64.1%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Elena Rostova -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] flex flex-col hover:border-outline transition-colors group cursor-pointer relative overflow-hidden">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary-fixed-dim"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-full overflow-hidden border border-outline-variant shrink-0 bg-surface-container-high flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of an Eastern European female executive named Elena Rostova. She has sharp features and light hair pulled back. The lighting is bright and clean, typical of a modern corporate portrait. The background is a stark, minimal light grey." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6EIhv4jwu-kjVkKoG75C_fcneGQ6QluSvOt33wfFovDf4LPO53lmKSVmLZUuWcyP0NeMM24G2kBLc4CztdK_bMpih80YGQa9-owwrvj9mkFv9O5VT6mcpNIN0QGnuw9OlqxGVpqYHpo7VZJSZWaR0e3KFZVcx6SFjjDcP6GI5S_Z_aOU8paW8A6fL7WsWi58Ycooh4JWz1WFP8mre71S5PzEJucAh1u9yYjUy-KW8dpQLcDIv8JgY">
+</div>
+<span class="bg-surface-container text-on-surface font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase flex items-center gap-1 border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] animate-spin">sync</span> Processing
+                        </span>
+</div>
+<div class="mb-4">
+<h3 class="font-headline-md text-[18px] text-on-background group-hover:text-primary transition-colors">Elena Rostova</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant font-mono mt-0.5">ID: VP-3381-C</p>
+</div>
+<div class="space-y-3 flex-1">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Created</span>
+<span class="font-body-md text-[14px] text-on-background">Today, 08:30</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Last Match</span>
+<span class="font-body-md text-[14px] text-on-surface-variant italic">Pending</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Confidence</span>
+<div class="flex items-center gap-2">
+<div class="w-16 h-1.5 bg-surface-container-highest rounded-full overflow-hidden relative">
+<div class="h-full bg-primary-fixed-dim w-1/2 absolute top-0 left-0 animate-[pulse_1s_ease-in-out_infinite]"></div>
+</div>
+<span class="font-body-md text-[14px] font-semibold text-on-surface-variant">--.-%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4: Unknown Caller -->
+<div class="bg-surface-container-lowest rounded-xl border border-outline-variant p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.03)] flex flex-col hover:border-outline transition-colors group cursor-pointer relative overflow-hidden opacity-80">
+<div class="absolute top-0 left-0 w-1 h-full bg-outline"></div>
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-full border border-outline-variant border-dashed shrink-0 bg-surface flex items-center justify-center text-outline">
+<span class="material-symbols-outlined">person_off</span>
+</div>
+<span class="bg-surface text-outline font-label-sm text-label-sm px-2.5 py-1 rounded-full uppercase flex items-center gap-1 border border-outline-variant">
+                            Unidentified
+                        </span>
+</div>
+<div class="mb-4">
+<h3 class="font-headline-md text-[18px] text-on-background group-hover:text-primary transition-colors italic">Unknown Caller</h3>
+<p class="font-body-md text-[14px] text-on-surface-variant font-mono mt-0.5">ID: TMP-492-X</p>
+</div>
+<div class="space-y-3 flex-1">
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Intercepted</span>
+<span class="font-body-md text-[14px] text-on-background">Yesterday, 14:22</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant pb-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Duration</span>
+<span class="font-body-md text-[14px] text-on-background">00:45s</span>
+</div>
+<div class="flex justify-between items-center pt-1">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Est. Risk</span>
+<div class="flex items-center gap-2">
+<span class="font-body-md text-[14px] font-semibold text-outline">Medium</span>
+</div>
+</div>
+</div>
+<div class="mt-4 pt-4 border-t border-outline-variant">
+<button class="w-full text-center text-label-md font-label-md text-primary hover:underline">Review Audio Segment</button>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+
+</body></html>
