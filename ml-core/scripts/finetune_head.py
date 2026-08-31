@@ -75,6 +75,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import (
     AutoFeatureExtractor,
     AutoModelForAudioClassification,
+    DataCollatorWithPadding,
     TrainingArguments,
     Trainer,
 )
@@ -178,6 +179,16 @@ def augment(wav, sr, seed=None, prob=0.5, rng=None):
     return (wav * float(rng.uniform(0.9, 1.1))).astype("float32")
 
 
+def make_collator(proc):
+    """Pad variable-length audio per-batch to the longest clip + build attention_mask.
+
+    Clips have different durations, so raw tensors can't be stacked. Wav2Vec2 handles
+    variable length only when input_values are padded to the batch max AND the
+    attention_mask is provided. Returns a DataCollatorWithPadding bound to `proc`.
+    """
+    return DataCollatorWithPadding(tokenizer=proc, padding="longest", return_tensors="pt")
+
+
 class AudioDS(Dataset):
     def __init__(self, proc, items, sr, augment_train=False):
         self.proc, self.items, self.sr = proc, items, sr
@@ -192,7 +203,7 @@ class AudioDS(Dataset):
         wav = load_wav(path, self.sr)
         if self.augment:
             wav = augment(wav, self.sr, rng=self.rng)
-        feats = self.proc(wav, sampling_rate=self.sr, return_tensors="pt", padding=True)
+        feats = self.proc(wav, sampling_rate=self.sr, return_tensors="pt")
         return {IMG_KEY: feats[IMG_KEY][0], "labels": label, "path": path}
 
 
@@ -238,7 +249,8 @@ def freeze_head(model, n_freeze=12):
     return model
 
 
-def compute_metrics(metrics, items):
+def compute_metrics(metrics):
+    """Trainer compute_metrics — receives an EvalPrediction (metrics.predictions/label_ids)."""
     preds = np.argmax(metrics.predictions, axis=-1)
     labels = metrics.label_ids
     return {
@@ -298,6 +310,7 @@ def train_once(repo, proc, train_items, test_items, sr, args, n_freeze,
         args=train_args,
         train_dataset=train_ds,
         eval_dataset=test_ds,
+        data_collator=make_collator(proc),
         compute_metrics=compute_metrics,
     )
     trainer.train(resume_from_checkpoint=resume if (resume and os.path.isdir(resume)) else None)
@@ -387,12 +400,16 @@ def inference_eval(model, proc, items, sr):
     """Run a trained model inference-only over items; return full classify_metrics."""
     model.eval()
     ds = AudioDS(proc, items, sr, augment_train=False)
-    dl = DataLoader(ds, batch_size=4, shuffle=False)
+    dl = DataLoader(ds, batch_size=4, shuffle=False, collate_fn=make_collator(proc))
     preds, labels, probs = [], [], []
     with torch.no_grad():
         for batch in dl:
             feats = batch[IMG_KEY].to(device())
-            out = model(feats).logits.detach().cpu().numpy()
+            if "attention_mask" in batch:
+                mask = batch["attention_mask"].to(device())
+                out = model(feats, attention_mask=mask).logits.detach().cpu().numpy()
+            else:
+                out = model(feats).logits.detach().cpu().numpy()
             p = torch.softmax(torch.from_numpy(out), dim=-1).numpy()
             preds.extend(np.argmax(out, axis=-1))
             labels.extend(batch["labels"].numpy())
@@ -405,16 +422,28 @@ def device():
 
 
 def summarize_rows(rows):
-    """Collapse per-fold rows into mean +/- std for each key metric."""
+    """Collapse per-fold rows into mean +/- std for each key metric.
+
+    Fold rows store Trainer eval metrics under the 'eval_' prefix (eval_acc, eval_fpr,
+    eval_fnr). Resolve each metric key tolerantly so a missing/renamed key can't nuke
+    the whole LOSO aggregate.
+    """
     keys = ("acc", "fpr", "fnr")
     out = {}
     for k in keys:
-        vals = [r["eval"][k] for r in rows]
+        vals = []
+        for r in rows:
+            ev = r.get("eval") or {}
+            v = ev.get(k)
+            if v is None:
+                v = ev.get("eval_" + k)
+            if v is not None:
+                vals.append(float(v))
         out[k] = {
-            "mean": float(np.mean(vals)),
-            "std": float(np.std(vals)),
-            "min": float(np.min(vals)),
-            "max": float(np.max(vals)),
+            "mean": float(np.mean(vals)) if vals else 0.0,
+            "std": float(np.std(vals)) if vals else 0.0,
+            "min": float(np.min(vals)) if vals else 0.0,
+            "max": float(np.max(vals)) if vals else 0.0,
             "per_fold": [float(v) for v in vals],
         }
     return out

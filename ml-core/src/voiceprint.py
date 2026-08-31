@@ -23,10 +23,19 @@ class Voiceprint:
         if self._encoder is None:
             try:
                 from resemblyzer import VoiceEncoder
-                self._encoder = VoiceEncoder(device=self.device)
+                # Resemblyzer needs a REAL torch device string ("cpu"/"cuda"/"mps"),
+                # not "auto". Resolve "auto" to a concrete device here (T4 Colab -> cuda,
+                # Apple Silicon -> mps, else CPU).
+                device = self.device
+                if device == "auto":
+                    import torch
+                    device = "cuda" if torch.cuda.is_available() else (
+                        "mps" if torch.backends.mps.is_available() else "cpu")
+                self._encoder = VoiceEncoder(device=device)
             except Exception as e:
                 raise RuntimeError(
-                    "resemblyzer not installed. Run:\n  pip install resemblyzer\n"
+                    "resemblyzer failed to load. If it is not installed, run:\n"
+                    "  pip install resemblyzer\n"
                     f"Original error: {e}"
                 )
         return self._encoder
