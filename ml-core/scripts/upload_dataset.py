@@ -92,14 +92,46 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default="ml-core/test_data",
                     help="local test_data/ folder to archive (real/ + cloned/)")
-    ap.add_argument("--upload-dir", required=True,
-                    help="Drive folder to persist the archive, e.g. "
-                         "/content/drive/MyDrive/VoxDetect/ml-core/dataset")
+    ap.add_argument(
+        "--upload-dir", default=None,
+        help="Drive folder to persist the archive, e.g. "
+             "/content/drive/MyDrive/VoxDetect/ml-core/dataset (requires a mounted "
+             "Drive; leave unset to just package locally and upload by hand)")
+    ap.add_argument(
+        "--package-dir", default=".",
+        help="local folder to write test_data.zip + test_data.zip.manifest.json when "
+             "--upload-dir is not set (so you can drag both files into Drive yourself)")
     args = ap.parse_args()
 
     if not pathlib.Path(args.root, "real").exists():
         raise SystemExit(f"No {args.root}/real found. Put real + cloned clips there first.")
-    _upload_zip(args.root, args.upload_dir)
+
+    if args.upload_dir:
+        _upload_zip(args.root, args.upload_dir)
+        return
+
+    # Local package-only: build the zip + manifest into --package-dir, but leave the
+    # temp archive OUTSIDE root (matching _upload_zip) and DON'T clean it up so the
+    # user can grab both files to upload manually.
+    root = pathlib.Path(args.root)
+    dest_dir = pathlib.Path(args.package_dir)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    zip_path = root.parent / "test_data.zip"
+    with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        for p in sorted(root.rglob("*")):
+            if p.is_file() and p.name == "README.md":
+                continue
+            if p.is_file():
+                zf.write(p, p.relative_to(root).as_posix())
+    manifest = _build_manifest(root, zip_path)
+    shutil.copy2(zip_path, dest_dir / "test_data.zip")
+    with open(dest_dir / "test_data.zip.manifest.json", "w") as f:
+        json.dump(manifest, f, indent=2)
+    os.remove(zip_path)
+    print(f"Packaged -> {dest_dir / 'test_data.zip'}")
+    print(f"Manifest -> {dest_dir / 'test_data.zip.manifest.json'}")
+    print(f"total_clips={manifest['total_clips']}  counts={json.dumps(manifest['counts'])}")
+    print("Upload BOTH files to: <Drive>/VoxDetect/ml-core/dataset/")
 
 
 if __name__ == "__main__":
