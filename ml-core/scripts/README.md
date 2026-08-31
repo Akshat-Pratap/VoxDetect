@@ -55,6 +55,39 @@ python3 -m evaluate --root /content/VoxDetect_data \
     --find-threshold
 ```
 
+### Threshold calibration (priority when a holdout shows AUC 1.0 but low accuracy)
+
+A holdout run can rank-order perfectly (ROC-AUC 1.0) yet score poorly on accuracy if the
+fixed cutoff (default 70) is cutting through the middle of your real/clone scores. That is a
+**calibration** problem, not a model problem — fix the threshold, don't retrain.
+
+1. **See the separation with your own eyes** — print every clip's raw risk score,
+   labeled REAL vs CLONE, plus the min/max/median of each group, for your holdout root
+   and your final checkpoint:
+   ```bash
+   python3 -m evaluate --root /content/holdout_root \
+        --checkpoint /content/drive/MyDrive/VoxDetect/ml-core/ft_head_v1 \
+        --scores
+   ```
+   With a clean separation there is a gap between `REAL max` and `CLONE min`; set the
+   cutoff mid-gap. If they overlap, the model isn't separating these clips and no
+   threshold fixes it.
+
+2. **Automatically pick the best cutoff** on the same holdout (max accuracy, tie-break
+   lower FPR):
+   ```bash
+   python3 -m evaluate --root /content/holdout_root \
+        --checkpoint /content/drive/MyDrive/VoxDetect/ml-core/ft_head_v1 \
+        --find-threshold --json
+   ```
+   It prints `Best threshold ... cutoff=<N>  ACC=...%  FPR=...%`. Use that `<N>` as your
+   live-demo `THRESH` (and update `RISK_BANDS` in `detect.py` if you want the band
+   boundary at the same place).
+
+> `--checkpoint` MUST point at the **final deployable model** (`ft_head_v1/` root) — the
+> LOSO fold artifacts live under `ft_head_v1/checkpoints/` and are deliberately weak
+> (head-only, built for speed). Root over folds.
+
 You can also append one row per run to the folium-style source-of-truth CSV
 (`ml-core/results/ablation_results.csv`), which self-documents **which dataset and
 checkpoint** were used plus every "how good is it" metric:

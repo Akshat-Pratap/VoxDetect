@@ -68,6 +68,9 @@ def main():
     ap.add_argument("--variant", default="wav2vec2", help="model_variant for DetectionEngine")
     ap.add_argument("--find-threshold", action="store_true",
                     help="sweep thresholds and pick the best cutoff instead of using --threshold")
+    ap.add_argument("--scores", action="store_true",
+                    help="print every clip's raw risk score (real vs cloned labeled) so you can "
+                         "SEE the real/clone separation by eye, then pick a cutoff in the gap")
     ap.add_argument("--json", action="store_true",
                     help="emit machine-readable JSON (easy to paste into results.md)")
     ap.add_argument("--out", default=None,
@@ -123,6 +126,22 @@ def main():
 
     if not rows:
         return
+
+    if args.scores:
+        print("=" * 62)
+        print(f"Per-clip risk scores ({len(rows)} clips) — checkpoint={args.checkpoint}")
+        print("-" * 62)
+        for r in sorted(rows, key=lambda x: (not x["true_fake"], x["score"])):
+            tag = "REAL" if not r["true_fake"] else "CLONE"
+            print(f"  {r['score']:6.1f}  {tag:5s}  {os.path.basename(r['path'])}")
+        print("-" * 62)
+        reals = [r["score"] for r in rows if not r["true_fake"]]
+        clones = [r["score"] for r in rows if r["true_fake"]]
+        if reals:
+            print(f"  REAL  range: min={min(reals):.1f}  max={max(reals):.1f}  median={sorted(reals)[len(reals)//2]:.1f}")
+        if clones:
+            print(f"  CLONE range: min={min(clones):.1f}  max={max(clones):.1f}  median={sorted(clones)[len(clones)//2]:.1f}")
+        print("=" * 62)
 
     n = len(rows)
     tp = sum(1 for r in rows if r["true_fake"] and r["pred_fake"])
