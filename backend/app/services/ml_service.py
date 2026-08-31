@@ -158,6 +158,10 @@ class MLService:
         self._available: bool = False
         self._init_error: str | None = None
         self._model_version: str = "wav2vec2-xlsr-deepfake-v0"
+        # Tracks WHICH model is actually scoring: "fine-tuned:<path>" when
+        # MODEL_CHECKPOINT is set, else "pretrained:Gustking" (HF base). Surfaced in
+        # /v1/health so it's impossible to silently run the base and mistake it for ours.
+        self._model_source: str | None = None
 
         self._bootstrap()
 
@@ -186,6 +190,9 @@ class MLService:
 
             device = settings.MODEL_DEVICE
             checkpoint = settings.MODEL_CHECKPOINT or None
+            self._model_source = (
+                f"fine-tuned:{checkpoint}" if checkpoint else "pretrained:Gustking"
+            )
 
             logger.info(
                 "MLService: loading DetectionEngine (device=%s checkpoint=%s)…",
@@ -196,6 +203,11 @@ class MLService:
                 model_variant="wav2vec2",
                 device=device,
                 checkpoint=checkpoint,
+            )
+            logger.warning(
+                "MLService FETCHED MODEL SOURCE -> %s  "
+                "(if you expected the fine-tuned model, verify MODEL_CHECKPOINT is set)",
+                self._model_source,
             )
 
             # Also cache and adapt the Voiceprint class for enrollment
@@ -414,5 +426,6 @@ class MLService:
         return {
             "available": self._available,
             "model_version": self._model_version,
+            "model_source": self._model_source,
             "error": self._init_error,
         }

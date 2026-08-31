@@ -54,11 +54,13 @@ async def v1_health(request: Request) -> HealthResponse:
 
     # Check ML service (no inference — just check flag)
     ml_status = "unknown"
+    model_source: str | None = None
     ml_service = getattr(getattr(request, "app", None), "state", None)
     if ml_service:
         svc = getattr(request.app.state, "ml_service", None)
         if svc is not None:
             ml_status = "ok" if svc.is_available else "unavailable"
+            model_source = getattr(svc, "model_source", None)
 
     return HealthResponse(
         status="ok",
@@ -66,4 +68,5 @@ async def v1_health(request: Request) -> HealthResponse:
         version=settings.APP_VERSION,
         database=db_status,
         ml_service=ml_status,
+        model_source=model_source,
     )

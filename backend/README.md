@@ -118,6 +118,72 @@ This downloads the Wav2Vec2 model from HuggingFace (~1.2 GB) on first run.
 
 Without the ML dependencies, the backend starts successfully but returns `503 ML_SERVICE_UNAVAILABLE` from inference endpoints.
 
+### 5.1 Use our fine-tuned model (P1) — where to put the files
+
+By default `MODEL_CHECKPOINT` is empty, so the backend silently uses the **pretrained
+Gustking base** downloaded from HuggingFace — **not our `ft_head_v1` fine-tune.** To serve
+our trained model you must copy it onto the machine running the backend and set
+`MODEL_CHECKPOINT` to that folder. **Drive is not connected to the backend; it is only
+mounted inside the P1 Colab session.** Download from Colab/Drive first.
+
+> The checkpoint dir must contain the **3 loadable files** (NOT `finetune_report.json`,
+> which is just our metrics doc and is ignored):
+>
+> ```
+> config.json               ← labels {0:"real", 1:"fake"}
+> model.safetensors         ← the weights (~1.26 GB)
+> preprocessor_config.json  ← sampling_rate 16000
+> ```
+
+Step-by-step for whoever owns the backend:
+
+1. **Get the model files off Colab/Drive**
+   ```bash
+   # In Colab, zip the fine-tune folder and download it to your machine:
+   !cd /content/drive/MyDrive/VoxDetect && zip -r ft_head_v1.zip ml-core/ft_head_v1
+   ```
+   Download `ft_head_v1.zip`, then unzip it on the backend machine.
+
+2. **Put the folder somewhere stable on the backend host**
+   ```bash
+   # macOS/Linux example — pick your own path, there is no reserved location:
+   mkdir -p backend/models
+   cp -r /path/to/unzipped/ft_head_v1 backend/models/
+   # Verify the 3 files are present:
+   ls backend/models/ft_head_v1   # -> config.json model.safetensors preprocessor_config.json
+   ```
+   (Using an existing repo dir like `backend/models/` is fine, but it is **gitignored /
+   untracked** — do not commit ~1.26 GB of weights to git.)
+
+3. **Point the backend at it** — in `backend/.env`:
+   ```env
+   # Absolute or backend-relative path to the folder from step 2:
+   MODEL_CHECKPOINT=/absolute/path/to/backend/models/ft_head_v1
+   MODEL_DEVICE=cpu          # or cuda if a GPU host
+   ```
+
+4. **Install the ML deps** (required for any inference, including ours):
+   ```bash
+   pip install -r ../ml-core/requirements.txt
+   ```
+
+5. **Restart and verify it loaded OUR model** — the startup log prints the model source,
+   and `/v1/health` exposes it as `model_source`:
+   ```
+   MLService FETCHED MODEL SOURCE -> fine-tuned:/absolute/path/to/backend/models/ft_head_v1
+   ```
+   ```bash
+   curl -s localhost:8000/v1/health
+   # -> "ml_service": "ok", "model_source": "fine-tuned:.../backend/models/ft_head_v1"
+   ```
+   If you see `model_source` = `pretrained:Gustking`, the backend is running the base model
+   and `MODEL_CHECKPOINT` is not set — go back to step 3.
+
+> **Docker note:** the backend `Dockerfile` deliberately leaves the ML-deps section commented
+> out (keeps the image small). If you run the backend in a container, uncomment that section,
+> copy `backend/models/ft_head_v1` into the image, and set `MODEL_CHECKPOINT` to the in-container
+> path.
+
 ---
 
 ## 6. Environment Configuration

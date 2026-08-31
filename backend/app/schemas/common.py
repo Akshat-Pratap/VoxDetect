@@ -21,3 +21,4 @@ class HealthResponse(BaseModel):
     version: str
     database: str | None = None
     ml_service: str | None = None
+    model_source: str | None = None
