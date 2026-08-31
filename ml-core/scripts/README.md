@@ -21,6 +21,10 @@ real/ cloned/ audio clips       /content/drive/MyDrive/VoxDetect/ml-core/dataset
 
 ### 1. upload_dataset.py — put clips on Drive as a verified archive (run ONCE, locally)
 
+Two modes:
+
+**A. Drive mounted / inside Colab** — uploads straight to Drive:
+
 ```bash
 # from your machine, first time only (or any time you add/change clips):
 python3 ml-core/scripts/upload_dataset.py \
@@ -28,8 +32,17 @@ python3 ml-core/scripts/upload_dataset.py \
     --upload-dir /content/drive/MyDrive/VoxDetect/ml-core/dataset
 ```
 
-Zips `real/` + `cloned/` (English + Hindi) into a single `test_data.zip` and writes a
-sha256-verified `test_data.manifest.json` (total count + per-language breakdown).
+**B. Package locally, upload by hand (Mac / no Drive mount)** — just emits the
+`test_data.zip` + `test_data.zip.manifest.json` into `--package-dir`, then you drag
+both files into `<Drive>/.../ml-core/dataset/` yourself:
+
+```bash
+python3 ml-core/scripts/upload_dataset.py --root ml-core/test_data --package-dir .
+```
+
+Either way it zips `real/` + `cloned/` (English + Hindi) into a single `test_data.zip`
+and writes a sha256-verified `test_data.zip.manifest.json` (total count + per-language
+breakdown). Re-run any time you add/change clips — it overwrites the previous archive.
 
 > **Why an archive (learned from folium):** individual files on Drive hit Google's
 > per-day file-operation quota and the FUSE cache can hide partial writes. One
