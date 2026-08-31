@@ -1,0 +1,2 @@
+# gitkeep — ensures data/ is tracked in git
+# SQLite database files in this directory are gitignored.

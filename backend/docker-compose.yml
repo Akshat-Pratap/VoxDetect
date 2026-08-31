@@ -1,0 +1,35 @@
+# VoxDetect Backend — Docker Compose (development)
+# Usage:
+#   docker compose up --build
+
+services:
+  backend:
+    build:
+      context: ..          # repository root (so Dockerfile can copy ml-core/src)
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=development
+      - DATABASE_URL=sqlite+aiosqlite:///./data/voxdetect.db
+      - DEFAULT_ORG=enterprise
+      - MAX_UPLOAD_SIZE_MB=25
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+      - WEBHOOK_TIMEOUT_SECONDS=5
+      - MODEL_DEVICE=cpu
+      - LOG_LEVEL=INFO
+    volumes:
+      # Persist SQLite DB across container restarts
+      - voxdetect_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  voxdetect_data:
+    driver: local
