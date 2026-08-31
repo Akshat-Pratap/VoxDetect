@@ -16,6 +16,7 @@ Usage (from backend):
     result = eng.analyze_audio("clip.wav")       # {risk_score, confidence, signals}
     result = eng.analyze_chunk(chunk_bytes)      # streaming chunk
 """
+import sys
 import numpy as np
 
 # Tunable fusion weights (P5/P6): v0 moved the dial toward the model signal because
@@ -64,7 +65,7 @@ class DetectionEngine:
                 # CRITICAL: verify class labels. Don't assume index order.
                 try:
                     self.id2label = self._model.config.id2label
-                    print("Model class mapping:", self.id2label)
+                    print("Model class mapping:", self.id2label, file=sys.stderr)
                 except Exception:
                     self.id2label = {}
                 # figure out which index is "fake/synthetic"
