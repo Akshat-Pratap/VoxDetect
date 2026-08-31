@@ -182,6 +182,25 @@ def main():
         best_fn = best_fn / n_fake if n_fake else 0.0
         log_csv({"acc": best["acc"], "fpr": best["fpr"], "fnr": best_fn}, best["thr"])
         find_payload = {"mode": "find-threshold", "best": {k: round(v, 4) for k, v in best.items()}}
+        # Emit a NORMALISED top-level summary too (ACC/FPR/FNR at the best cutoff), so
+        # any consumer (notebook A/B cell, results.md) reads the SAME flat keys as the
+        # plain-threshold payload: payload["accuracy"]/["fpr"]/["fnr"].
+        find_payload.update({
+            "n_clips": n,
+            "threshold": best["thr"],
+            "accuracy": round(best["acc"], 4),
+            "fpr": round(best["fpr"], 4),
+            "fnr": round(best_fn, 4),
+            "roc_auc": round(roc_auc, 4),
+            "precision_real": round(p_real, 4),
+            "recall_real": round(r_real, 4),
+            "f1_real": round(f1_real, 4),
+            "confusion": {"tp": tp, "fp": fp, "tn": tn, "fn": fn},
+            "src_root": args.root,
+            "dataset": args.dataset,
+            "variant": args.variant,
+            "run_name": args.run_name,
+        })
         payload = find_payload
         _emit(args, payload)
         if not (args.json or args.out):
