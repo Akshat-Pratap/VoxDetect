@@ -18,13 +18,16 @@ Usage (from backend):
 """
 import numpy as np
 
-# Tunable fusion weights (P5/P6: these are v0 HEURISTICS, not calibrated to data yet.
-# Calibrate with calibrate_thresholds() / evaluate.py before quoting accuracy numbers.)
+# Tunable fusion weights (P5/P6): v0 moved the dial toward the model signal because
+# prosody/context are noisy on our small dataset and can drag a clearly-fake clip back
+# down. The other three stay NONZERO so the fusion story is still visible, just less
+# influential. Calibrate the decision threshold AFTER any weight change — the threshold
+# must match the fused score actually used in the demo (evaluate.py --find-threshold).
 DEFAULT_WEIGHTS = {
-    "model": 0.5,      # spectral/artifact deepfake detector
-    "prosody": 0.25,   # prosody anomaly
-    "voiceprint": 0.15,# cross-session speaker match (inverted: low match -> high risk)
-    "context": 0.10,   # metadata flags (first-time, high-value, odd-hour)
+    "model": 0.7,      # spectral/artifact deepfake detector (our strongest signal)
+    "prosody": 0.15,   # prosody anomaly
+    "voiceprint": 0.10,# cross-session speaker match (inverted: low match -> high risk)
+    "context": 0.05,   # metadata flags (first-time, high-value, odd-hour)
 }
 
 # Risk bands
