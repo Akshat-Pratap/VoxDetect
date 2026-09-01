@@ -268,6 +268,41 @@ def _normalise(raw: dict[str, Any], fusion: dict[str, bool] | None = None) -> No
     }
 
 
+def _ensure_wav_pcm(audio_bytes: bytes) -> bytes:
+    """
+    Ensure audio bytes are in standard 16kHz mono WAV PCM format.
+    If already a standard WAV, returns as-is.
+    If WebM, MP3, M4A, OGG, or headerless stream, transcode using ffmpeg.
+    """
+    if audio_bytes.startswith(b"RIFF") and b"WAVE" in audio_bytes[:16]:
+        return audio_bytes
+
+    import shutil
+    import subprocess
+
+    ffmpeg_path = shutil.which("ffmpeg")
+    if not ffmpeg_path:
+        try:
+            import imageio_ffmpeg
+
+            ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception:
+            ffmpeg_path = "ffmpeg"
+
+    try:
+        proc = subprocess.run(
+            [ffmpeg_path, "-y", "-i", "-", "-f", "wav", "-ar", "16000", "-ac", "1", "-"],
+            input=audio_bytes,
+            capture_output=True,
+        )
+        if proc.returncode == 0 and len(proc.stdout) > 44:
+            return proc.stdout
+    except Exception:
+        pass
+
+    return audio_bytes
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # MLService
 # ──────────────────────────────────────────────────────────────────────────────
@@ -396,7 +431,8 @@ class MLService:
     ) -> NormalisedResult:
         """Synchronous inference from raw audio bytes.  Runs in thread pool."""
         self._require_engine()
-        buf = io.BytesIO(audio_bytes)
+        wav_bytes = _ensure_wav_pcm(audio_bytes)
+        buf = io.BytesIO(wav_bytes)
         raw = self._engine.analyze_audio(buf, context=context)
         return _normalise(raw, fusion=fusion)
 
@@ -413,7 +449,8 @@ class MLService:
         if self._voiceprint_cls is None:
             raise MLServiceUnavailable("Voiceprint module not loaded.")
         vp = self._voiceprint_cls()
-        buf = io.BytesIO(audio_bytes)
+        wav_bytes = _ensure_wav_pcm(audio_bytes)
+        buf = io.BytesIO(wav_bytes)
         emb = vp.embed(buf)  # returns numpy float32 array
         return emb.tolist()
 
@@ -549,7 +586,8 @@ class MLService:
 
         def _run() -> float:
             vp = self._voiceprint_cls()
-            buf = io.BytesIO(audio_bytes)
+            wav_bytes = _ensure_wav_pcm(audio_bytes)
+            buf = io.BytesIO(wav_bytes)
             emb = vp.embed(buf)
             enrolled_arr = {"embedding": np.asarray(enrolled_embedding, dtype=np.float32)}
             sim, _ = vp.is_match(emb, enrolled_arr)

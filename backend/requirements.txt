@@ -23,6 +23,10 @@ python-multipart>=0.0.9
 # ── WebSocket support (included in uvicorn[standard] via websockets) ───────────
 websockets>=12.0
 
+# ── Audio transcoding & decoding (WebM, Opus, MP3 -> WAV PCM) ─────────────────
+imageio-ffmpeg>=0.5.0
+pydub>=0.25.1
+
 # NOTE: ML Core dependencies (torch, torchaudio, transformers, librosa,
 # soundfile, resemblyzer) are NOT listed here.
 # They are managed by P1 in ml-core/requirements.txt.

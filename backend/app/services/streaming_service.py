@@ -34,7 +34,20 @@ from app.services.organization_service import OrganizationService
 logger = get_logger(__name__)
 
 # Audio conversion: WebM/Opus (from browser MediaRecorder) -> WAV PCM for ML
-# Uses ffmpeg subprocess (system dependency, no Python audio lib issues)
+# Uses ffmpeg subprocess (system PATH or imageio-ffmpeg fallback)
+
+
+def _get_ffmpeg_bin() -> str:
+    """Return path to ffmpeg binary (from system PATH or imageio-ffmpeg)."""
+    import shutil
+    ffmpeg_path = shutil.which("ffmpeg")
+    if ffmpeg_path:
+        return ffmpeg_path
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        return "ffmpeg"
 
 
 def _webm_opus_to_wav_pcm(webm_bytes: bytes) -> bytes:
@@ -46,14 +59,15 @@ def _webm_opus_to_wav_pcm(webm_bytes: bytes) -> bytes:
     self-describing and fail to decode on their own. So callers must accumulate the full
     stream and pass the complete buffer here each time.
 
-    Uses ffmpeg subprocess (requires ffmpeg in PATH).
+    Uses ffmpeg subprocess.
     Returns raw WAV bytes suitable for the ML pipeline.
     """
     import subprocess
 
+    ffmpeg_bin = _get_ffmpeg_bin()
     result = subprocess.run(
         [
-            "ffmpeg",
+            ffmpeg_bin,
             "-y",
             "-i",
             "-",
