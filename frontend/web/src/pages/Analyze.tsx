@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useAlertContext } from '@/context/AlertContext';
+import { useSignalSettings } from '@/context/SignalSettingsContext';
 import { analyzeCall } from '@/services/api';
 import { RiskGauge } from '@/components/risk/RiskGauge';
 import { SignalBreakdown } from '@/components/risk/SignalBreakdown';
@@ -17,6 +18,7 @@ import { Upload, FileAudio, CheckCircle2, RotateCcw, AlertTriangle, ShieldCheck 
 export function Analyze() {
   const { org } = useOrganization();
   const { addToast } = useAlertContext();
+  const { fusion } = useSignalSettings();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
@@ -31,7 +33,6 @@ export function Analyze() {
         score: Math.round(result.risk_score ?? 0),
         band: result.band ?? undefined,
         action: result.recommended_action ?? undefined,
-        autoClose: false,
       });
     }
   }, [result, addToast]);
@@ -49,7 +50,7 @@ export function Analyze() {
     setLoading(true);
     setError(null);
     try {
-      const res = await analyzeCall(file, org);
+      const res = await analyzeCall(file, org, null, fusion);
       setResult(res);
     } catch (err: any) {
       setError(err?.message || 'Failed to analyze audio clip.');
