@@ -2,8 +2,9 @@
  * src/pages/Analyze.tsx
  * Audio file batch upload and deepfake analysis page.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
+import { useAlertContext } from '@/context/AlertContext';
 import { analyzeCall } from '@/services/api';
 import { RiskGauge } from '@/components/risk/RiskGauge';
 import { SignalBreakdown } from '@/components/risk/SignalBreakdown';
@@ -15,10 +16,25 @@ import { Upload, FileAudio, CheckCircle2, RotateCcw, AlertTriangle, ShieldCheck 
 
 export function Analyze() {
   const { org } = useOrganization();
+  const { addToast } = useAlertContext();
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (result && (result.band === 'high' || result.band === 'critical')) {
+      addToast({
+        type: result.band === 'critical' ? 'critical_risk' : 'high_risk',
+        title: result.band === 'critical' ? '🔴 CRITICAL RISK DETECTED' : '⚠ HIGH RISK DETECTED',
+        message: `Risk score: ${Math.round(result.risk_score ?? 0)}/100. ${result.recommended_action ? '' : 'Potential voice-cloning detected.'}`,
+        score: Math.round(result.risk_score ?? 0),
+        band: result.band ?? undefined,
+        action: result.recommended_action ?? undefined,
+        autoClose: false,
+      });
+    }
+  }, [result, addToast]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

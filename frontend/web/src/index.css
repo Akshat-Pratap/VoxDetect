@@ -357,17 +357,23 @@ body {
 .toggle input:checked + .toggle-slider { background: rgb(var(--accent)); }
 .toggle input:checked + .toggle-slider::before { transform: translateX(1.08rem); }
 
+@keyframes alert-enter {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 /* ── Motion primitives ─────────────────────────────────────────────── */
 .gauge-arc { transition: stroke-dashoffset 0.7s cubic-bezier(0.2,0.8,0.2,1), stroke 0.5s ease; }
 .score-number { transition: color 0.5s ease; font-variant-numeric: tabular-nums; }
 .signal-bar-fill { transition: width 0.6s cubic-bezier(0.2,0.8,0.2,1); }
 .page-enter { animation: fadeIn 0.3s ease-out; }
 .pulse-live { animation: pulseSoft 2.4s ease-in-out infinite; }
+.alert-enter { animation: alert-enter 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
-/* ── Reduced motion ────────────────────────────────────────────────── */
+/* ── Reduced motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .grain { animation: none !important; }
   .btn, .card, .glass { transition: none !important; }
-  .gauge-arc, .score-number, .signal-bar-fill { transition: none !important; }
+  .gauge-arc, .score-number, .signal-bar-fill, .alert-enter { transition: none !important; }
   * { scroll-behavior: auto !important; }
 }
