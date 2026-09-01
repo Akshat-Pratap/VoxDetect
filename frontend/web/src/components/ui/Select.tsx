@@ -103,8 +103,8 @@ export function Select({
           className={[
             'flex items-center gap-2 text-sm font-medium text-text-primary transition-colors',
             pill
-              ? 'py-1.5 pl-3 pr-2 rounded-full bg-glass/[0.05] border border-glass/[0.1] hover:bg-glass/[0.08] hover:border-glass/[0.16]'
-              : 'py-2 px-3 rounded-[10px] bg-glass/[0.05] border border-glass/[0.12] hover:border-glass/[0.2]',
+              ? 'py-1.5 pl-3 pr-2 rounded-full bg-bg-elevated border border-bg-border/15 hover:bg-bg-card-rgb hover:border-bg-border/30'
+              : 'py-2 px-3 rounded-[10px] bg-bg-elevated border border-bg-border/15 hover:border-bg-border/30',
             fullWidth ? 'w-full' : '',
           ].join(' ')}
         >
@@ -129,7 +129,7 @@ export function Select({
               width: coords.width,
               zIndex: 9999,
             }}
-            className="rounded-xl bg-bg-elevated border border-glass/[0.14] p-1 shadow-lg"
+            className="rounded-xl bg-bg-elevated border border-bg-border/15 p-1 shadow-lg"
           >
             {options.map((o) => {
               const selected = o.value === value;
@@ -146,7 +146,7 @@ export function Select({
                   className={`w-full flex items-start justify-between gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
                     selected
                       ? 'bg-accent/15 text-accent font-medium'
-                      : 'text-text-secondary hover:bg-glass/[0.06] hover:text-text-primary'
+                      : 'text-text-secondary hover:bg-bg-card-rgb hover:text-text-primary'
                   }`}
                 >
                   <span className="min-w-0">

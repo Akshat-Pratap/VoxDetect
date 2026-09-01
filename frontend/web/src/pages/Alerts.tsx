@@ -102,14 +102,14 @@ export function Alerts() {
                     </td>
                     <td className="p-4 font-mono text-text-primary">{item.analysis_id.slice(0, 8)}...</td>
                     <td className="p-4 font-mono font-bold text-text-primary">
-                      {item.risk_score !== null ? `${Math.round(item.risk_score)}/100` : '—'}
+                      {item.risk_score !== null ? `${Math.round(item.risk_score)}/100` : 'N/A'}
                     </td>
                     <td className="p-4">
                       <RiskBandBadge band={item.risk_band} severity={item.severity} size="sm" />
                     </td>
-                    <td className="p-4 text-text-primary font-medium">{item.recommended_action || '—'}</td>
+                    <td className="p-4 text-text-primary font-medium">{item.recommended_action || 'N/A'}</td>
                     <td className="p-4 font-mono text-text-muted">
-                      {item.processing_latency_ms ? `${Math.round(item.processing_latency_ms)}ms` : '—'}
+                      {item.processing_latency_ms ? `${Math.round(item.processing_latency_ms)}ms` : 'N/A'}
                     </td>
                   </tr>
                 ))}

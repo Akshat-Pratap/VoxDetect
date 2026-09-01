@@ -35,7 +35,7 @@ export function Dashboard() {
             AI-Powered Voice Cloning Detection
           </h1>
           <p className="text-base text-text-secondary leading-relaxed max-w-xl">
-            Multi-signal acoustic defense — a Wav2Vec2 deepfake classifier, prosody anomaly
+            Multi-signal acoustic defense: a Wav2Vec2 deepfake classifier, prosody anomaly
             detection, speaker verification, and contextual risk scoring.
           </p>
 

@@ -92,10 +92,13 @@ export function Sidebar() {
 
       {/* Nav */}
       <nav className="flex-1 px-2 overflow-y-auto overflow-x-hidden">
-        {navGroups.map((group) => (
-          <div key={group.label} className="mb-4">
+        {navGroups.map((group, gi) => (
+          <div
+            key={group.label}
+            className={`${gi > 0 ? 'mt-4 border-t border-glass/[0.06] pt-2.5' : ''}`}
+          >
             {!collapsed && (
-              <p className="px-3 pb-1.5 pt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
+              <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-text-muted">
                 {group.label}
               </p>
             )}
@@ -109,7 +112,7 @@ export function Sidebar() {
                         className={`group flex items-center rounded-md text-sm transition-colors duration-150 ${
                           collapsed
                             ? 'justify-center mx-auto w-10 h-10'
-                            : 'gap-3 px-3 py-2'
+                            : 'gap-3 pl-3 pr-3 h-9'
                         } ${
                           isActive
                             ? 'bg-accent/15 text-accent font-medium'
