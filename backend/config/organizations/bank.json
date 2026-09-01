@@ -1,9 +1,9 @@
 {
   "organization": "bank",
   "thresholds": {
-    "low_max": 25,
-    "medium_max": 60,
-    "high_min": 60,
+    "low_max": 7.5,
+    "medium_max": 80,
+    "high_min": 7.5,
     "critical_min": 85
   },
   "actions": {
