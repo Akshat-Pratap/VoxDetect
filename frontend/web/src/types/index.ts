@@ -70,6 +70,23 @@ export interface SignalBreakdownData {
   context_risk: number | null;
 }
 
+// Which signals vote in the weighted verdict. Only "model" is enabled by
+// default (the raw deepfake classifier drives the verdict); the others are
+// surfaced for transparency until the user opts into fusion in Settings.
+export interface FusionMask {
+  model: boolean;
+  prosody_anomaly: boolean;
+  voiceprint_risk: boolean;
+  context_risk: boolean;
+}
+
+export const DEFAULT_FUSION: FusionMask = {
+  model: true,
+  prosody_anomaly: false,
+  voiceprint_risk: false,
+  context_risk: false,
+};
+
 // ── Call Context ─────────────────────────────────────────────────────
 export interface CallContext {
   first_time_contact: boolean;
@@ -108,6 +125,7 @@ export interface StreamMetadata {
   odd_hour: boolean;
   sensitive_data_request: boolean;
   enrolled_speaker_id: string | null;
+  fusion?: Partial<Record<keyof FusionMask, boolean>>;
 }
 
 export interface StreamReadyMessage {

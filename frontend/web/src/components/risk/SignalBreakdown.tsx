@@ -3,6 +3,7 @@
  * Visual progress bars for the 4 fused signals.
  */
 import React from 'react';
+import { useSignalSettings } from '@/context/SignalSettingsContext';
 import type { SignalBreakdownData } from '@/types';
 
 interface Props {
@@ -10,12 +11,15 @@ interface Props {
 }
 
 export function SignalBreakdown({ signals }: Props) {
+  const { fusion } = useSignalSettings();
+
   const signalConfigs = [
     {
       name: 'Deepfake Audio Model',
       description: 'Wav2Vec2 acoustic artifacts · decisive',
       value: signals.model,
       weight: 'Verdict',
+      key: 'model' as const,
       type: 'risk',
     },
     {
@@ -23,6 +27,7 @@ export function SignalBreakdown({ signals }: Props) {
       description: 'Pitch variance, pause rhythm & tempo',
       value: signals.prosody_anomaly,
       weight: 'Ref.',
+      key: 'prosody_anomaly' as const,
       type: 'anomaly',
     },
     {
@@ -30,6 +35,7 @@ export function SignalBreakdown({ signals }: Props) {
       description: 'Distance to enrolled speaker',
       value: signals.voiceprint_risk,
       weight: 'Ref.',
+      key: 'voiceprint_risk' as const,
       type: 'risk',
     },
     {
@@ -37,6 +43,7 @@ export function SignalBreakdown({ signals }: Props) {
       description: 'Metadata flags & scenario',
       value: signals.context_risk,
       weight: 'Ref.',
+      key: 'context_risk' as const,
       type: 'risk',
     },
   ];
@@ -48,6 +55,7 @@ export function SignalBreakdown({ signals }: Props) {
         const pct = hasVal ? Math.min(100, Math.max(0, Math.round(sig.value! * 100))) : 0;
 
         const decisive = sig.weight === 'Verdict';
+        const inVerdict = sig.key === 'model' || fusion[sig.key];
         let barGradient = 'from-emerald-500/70 to-green-400/70';
         if (pct >= 70) barGradient = 'from-rose-500/80 to-red-400/80';
         else if (pct >= 35) barGradient = 'from-amber-500/70 to-yellow-400/70';
@@ -67,6 +75,11 @@ export function SignalBreakdown({ signals }: Props) {
                 >
                   {sig.weight}
                 </span>
+                {inVerdict && (
+                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-400">
+                    {decisive ? 'Default' : 'In verdict'}
+                  </span>
+                )}
               </span>
               <span className="text-sm font-semibold font-mono text-text-primary">
                 {hasVal ? `${pct}%` : 'N/A'}
