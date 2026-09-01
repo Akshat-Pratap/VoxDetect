@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { VoxDetectWebSocket } from '@/services/websocket';
 import { useMicrophone } from './useMicrophone';
 import { useAlertContext } from '@/context/AlertContext';
+import { useSignalSettings } from '@/context/SignalSettingsContext';
 import type {
   OrgType,
   WSStatus,
@@ -16,6 +17,7 @@ import type {
   RiskHistoryPoint,
   CallContext,
   SignalBreakdownData,
+  FusionMask,
 } from '@/types';
 
 const MAX_HISTORY = 60;  // Keep at most 60 score points in memory
@@ -38,6 +40,7 @@ export interface LiveMonitoringState {
 
 export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
   const { addToast } = useAlertContext();
+  const { fusion } = useSignalSettings();
 
   const [state, setState] = useState<LiveMonitoringState>({
     wsStatus: 'idle',
@@ -61,10 +64,12 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
   const isMonitoringRef = useRef(false);
   const orgRef = useRef(org);
   const contextRef = useRef(context);
+  const fusionRef = useRef(fusion);
 
   // Keep refs in sync so reconnect picks up latest values
   useEffect(() => { orgRef.current = org; }, [org]);
   useEffect(() => { contextRef.current = context; }, [context]);
+  useEffect(() => { fusionRef.current = fusion; }, [fusion]);
 
   const handleChunk = useCallback((chunk: ArrayBuffer) => {
     wsRef.current?.sendAudioChunk(chunk);
@@ -86,7 +91,7 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
 
   const handleRiskUpdate = useCallback(
     (data: StreamChunkResult) => {
-      const score = data.rolling_risk_score ?? data.risk_score;
+      const score = data.risk_score ?? data.rolling_risk_score;
 
       setState((prev) => {
         const newHistory = [
@@ -135,7 +140,6 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
           score: Math.round(score ?? 0),
           band: currentBand ?? undefined,
           action: data.recommended_action ?? undefined,
-          autoClose: false,
         });
       }
 
@@ -187,6 +191,7 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
       odd_hour: contextRef.current.odd_hour ?? false,
       sensitive_data_request: contextRef.current.sensitive_data_request ?? false,
       enrolled_speaker_id: contextRef.current.enrolled_speaker_id ?? null,
+      fusion: fusionRef.current,
     });
 
     wsRef.current = ws;

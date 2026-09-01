@@ -9,6 +9,7 @@ import { RiskGauge } from '@/components/risk/RiskGauge';
 import { RiskTrendChart } from '@/components/risk/RiskTrendChart';
 import { SignalBreakdown } from '@/components/risk/SignalBreakdown';
 import { RiskBandBadge } from '@/components/risk/RiskBandBadge';
+import { AudioVisualizer } from '@/components/risk/AudioVisualizer';
 import { ORG_CONFIGS } from '@/types';
 import { Mic, MicOff, AlertOctagon, ShieldAlert, SlidersHorizontal, Info } from 'lucide-react';
 
@@ -42,7 +43,7 @@ export function LiveCall() {
     isMonitoring,
   } = useLiveMonitoring(org, context);
 
-  const displayScore = rollingRisk ?? riskScore;
+  const displayScore = riskScore ?? rollingRisk;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -101,7 +102,9 @@ export function LiveCall() {
         <div className="lg:col-span-2 space-y-6">
           {/* Main Risk Display Card */}
           <div className="card flex flex-col md:flex-row items-center justify-around p-6 gap-6">
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center gap-8 w-full md:w-auto">
+              {/* Live detection visualizer — animated while monitoring */}
+              <AudioVisualizer active={isMonitoring} band={band} flagged={flagged} />
               <RiskGauge score={displayScore} band={band} size={220} />
             </div>
 
