@@ -46,7 +46,15 @@ class Settings(BaseSettings):
 
     # ── Streaming ─────────────────────────────────────────────────────────
     STREAM_CHUNK_SECONDS: int = 3
-    STREAM_ROLLING_WINDOW: int = 5  # number of recent chunks for rolling avg
+    STREAM_ROLLING_WINDOW: int = 3  # recent chunks for a light rolling median
+    # Only the newest N seconds of accumulated audio are analysed each update,
+    # so inference stays constant-time and the score reflects recent speech
+    # instead of the whole growing conversation.
+    STREAM_ANALYSIS_WINDOW_SECONDS: int = 4
+    # Hysteresis: once a chunk flags HIGH/CRITICAL, stay flagged until this many
+    # consecutive low (unflagged) chunks are seen. Prevents a single weak 4s
+    # audio window from clearing a genuine clone alarm (classic alarm debounce).
+    STREAM_DISARM_STREAK: int = 3
 
     # ── CORS ──────────────────────────────────────────────────────────────
     CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5173"
