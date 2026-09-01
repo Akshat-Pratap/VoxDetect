@@ -24,7 +24,7 @@ def _print_label_mapping(eng):
     print("=" * 45)
 
 
-def _check_clip(eng, path, expected, threshold=70):
+def _check_clip(eng, path, expected, threshold=7.5):
     if not os.path.exists(path):
         print(f"  [SKIP] no file at {path}")
         return None
@@ -33,12 +33,12 @@ def _check_clip(eng, path, expected, threshold=70):
     match = "CORRECT" if (pred == expected) else "WRONG"
     print(f"  {path}")
     print(f"    expected={expected:5s}  got={pred:5s}  [{match}]  "
-          f"risk={r['risk_score']:.0f} band={r['band']}  "
+          f"risk={r['risk_score']:.1f} band={r['band']}  "
           f"model_prob={r['models']['synthetic_prob']:.3f}")
     return match == "CORRECT"
 
 
-def run(real=None, cloned=None, threshold=70):
+def run(real=None, cloned=None, threshold=7.5):
     from detect import DetectionEngine
     eng = DetectionEngine(model_variant="wav2vec2")
     _print_label_mapping(eng)

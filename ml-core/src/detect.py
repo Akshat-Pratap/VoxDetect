@@ -31,8 +31,12 @@ DEFAULT_WEIGHTS = {
     "context": 0.05,   # metadata flags (first-time, high-value, odd-hour)
 }
 
-# Risk bands
-RISK_BANDS = [(0, 30, "low"), (30, 70, "medium"), (70, 101, "high")]
+# DEPRECATED for the live verdict. These fused-score bands (30/70) are only used by the
+# standalone `_band()` helper for metadata display. The backend (ml_service._normalise) does
+# NOT use this: it replaces the band with a binary low/high decision at VERDICT_CUTOFF=7.5
+# derived from the model's synthetic_prob (real <7.5, cloned >=7.5). Keep them in sync with
+# the backend decision boundary so standalone calls don't misread the score.
+RISK_BANDS = [(0, 7.5, "low"), (7.5, 85, "high"), (85, 101, "critical")]
 
 
 def sigmoid(x):

@@ -106,13 +106,17 @@ Track what audio exists. P4 generates/records; you measure.
 |-------------|--------------|---------------|
 | | | |
 
-### Risk-band sanity
+### Risk-band sanity (decision boundary = 7.5, verified on the 60-clip sweep)
 
 | Band | Real clip scores | Cloned clip scores |
 |------|------------------|--------------------|
-| low (<30) | | |
-| medium (30-70) | | |
-| high (>70) | | |
+| low (<7.5, authentic) | 5.4–7.3 | — |
+| high (7.5–85, flagged clone) | — | 7.9–84.8 |
+| critical (>=85) | — | — |
+
+> Note: the gauge/verdict use the raw deepfake classifier scaled to 0–100
+> (`synthetic_prob × 100`), NOT the old 30/70 fused-score bands in detect.py's RISK_BANDS.
+> detect.py's bands are metadata-only and overridden by the backend (ml_service._normalise).
 
 ---
 

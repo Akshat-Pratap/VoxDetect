@@ -2,8 +2,8 @@
   "organization": "bank",
   "thresholds": {
     "low_max": 7.5,
-    "medium_max": 80,
-    "high_min": 7.5,
+    "medium_max": 85,
+    "high_min": 25,
     "critical_min": 85
   },
   "actions": {
@@ -14,6 +14,9 @@
   },
   "webhook": {
     "url": null,
-    "trigger_on": ["high", "critical"]
+    "trigger_on": [
+      "high",
+      "critical"
+    ]
   }
 }

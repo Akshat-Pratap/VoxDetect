@@ -145,10 +145,9 @@ class OrganizationService:
 
     @staticmethod
     def _classify_severity(risk_score: float, thresholds: dict) -> str:
-        critical_min = thresholds.get("critical_min", 90)
-        high_min = thresholds.get("high_min", 70)
-        medium_max = thresholds.get("medium_max", 70)
-        low_max = thresholds.get("low_max", 30)
+        critical_min = thresholds.get("critical_min", 85)
+        high_min = thresholds.get("high_min", 25)
+        low_max = thresholds.get("low_max", 7.5)  # below this = low; >= this = medium
 
         if risk_score >= critical_min:
             return "critical"

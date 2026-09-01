@@ -12,6 +12,14 @@ interface Props {
   showLabel?: boolean;
 }
 
+// Severity thresholds aligned with the backend org config (backend/config/organizations/*.json
+// and OrganizationService._classify_severity). The real-vs-clone decision boundary is 7.5;
+// a clone (>= 7.5) is always "high", and >= 85 escalates to "critical". Keeping these synced
+// with the backend means the gauge color never contradicts the verdict/badge.
+const HIGH_MIN = 7.5;      // >= this => flagged as cloned (matches VERDICT_CUTOFF)
+const CRITICAL_MIN = 85;   // >= this => critical severity
+const THRESHOLD_MARKS = [HIGH_MIN, CRITICAL_MIN];
+
 function getBandColor(band: string | null, score: number | null): string {
   const b = band ?? getBandFromScore(score ?? 0);
   switch (b) {
@@ -24,9 +32,8 @@ function getBandColor(band: string | null, score: number | null): string {
 }
 
 function getBandFromScore(score: number): string {
-  if (score >= 85) return 'critical';
-  if (score >= 60) return 'high';
-  if (score >= 30) return 'medium';
+  if (score >= CRITICAL_MIN) return 'critical';
+  if (score >= HIGH_MIN) return 'high';
   return 'low';
 }
 
@@ -44,7 +51,7 @@ function getBandSubtext(band: string | null): string {
   switch (band) {
     case 'critical': return 'Highly likely synthetic voice';
     case 'high': return 'Potential voice-cloning detected';
-    case 'medium': return 'Anomalies detected — monitor';
+    case 'medium': return 'Anomalies detected, monitor';
     case 'low': return 'Voice appears authentic';
     default: return 'Start monitoring to analyze';
   }
@@ -118,7 +125,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
         />
 
         {/* Threshold markers */}
-        {[25, 60, 85].map((threshold) => {
+        {THRESHOLD_MARKS.map((threshold) => {
           const angle = arcStart + totalAngle * (threshold / 100);
           const inner = {
             x: cx + (radius - strokeWidth * 0.8) * Math.cos(angle),
@@ -170,7 +177,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
             transition: 'fill 0.5s ease',
           }}
         >
-          {score !== null ? Math.round(canvasScore) : '—'}
+          {score !== null ? Math.round(canvasScore) : 'N/A'}
         </text>
 
         {/* /100 label */}
