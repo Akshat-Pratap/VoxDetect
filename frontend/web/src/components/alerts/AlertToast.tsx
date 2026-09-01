@@ -7,15 +7,16 @@ import type { ToastAlert } from '@/types';
 
 interface Props {
   toast: ToastAlert;
+  leaving?: boolean;
   onDismiss: (id: string) => void;
 }
 
-export function AlertToast({ toast, onDismiss }: Props) {
+export function AlertToast({ toast, leaving = false, onDismiss }: Props) {
   const isHighOrCrit = toast.type === 'high_risk' || toast.type === 'critical_risk';
 
   return (
     <div
-      className={`alert-enter w-96 p-4 rounded-xl shadow-lg border backdrop-blur-md flex gap-3 transition-all ${
+      className={`${leaving ? 'alert-exit' : 'alert-enter'} w-96 p-4 rounded-xl shadow-lg border backdrop-blur-md flex gap-3 ${
         toast.type === 'critical_risk'
           ? 'bg-red-950/90 border-red-500/50 text-red-200'
           : toast.type === 'high_risk'

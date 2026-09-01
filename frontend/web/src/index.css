@@ -358,8 +358,13 @@ body {
 .toggle input:checked + .toggle-slider::before { transform: translateX(1.08rem); }
 
 @keyframes alert-enter {
-  from { opacity: 0; transform: translateX(24px); }
+  from { opacity: 0; transform: translateX(calc(100% + 24px)); }
   to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes alert-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(calc(100% + 24px)); }
 }
 
 /* ── Motion primitives ─────────────────────────────────────────────── */
@@ -369,11 +374,24 @@ body {
 .page-enter { animation: fadeIn 0.3s ease-out; }
 .pulse-live { animation: pulseSoft 2.4s ease-in-out infinite; }
 .alert-enter { animation: alert-enter 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.alert-exit { animation: alert-exit 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+
+/* ── Live mic visualizer ────────────────────────────────────── */
+@keyframes vox-ring {
+  0%   { transform: scale(0.55); opacity: 0.9; }
+  100% { transform: scale(1.45); opacity: 0; }
+}
+@keyframes vox-bar {
+  0%, 100% { transform: scaleY(0.25); }
+  50%      { transform: scaleY(1); }
+}
+.vox-bar-idle { animation: none; }
 
 /* ── Reduced motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   .grain { animation: none !important; }
   .btn, .card, .glass { transition: none !important; }
   .gauge-arc, .score-number, .signal-bar-fill, .alert-enter { transition: none !important; }
+  [class*="animate-\[vox-"] { animation: none !important; }
   * { scroll-behavior: auto !important; }
 }

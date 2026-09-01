@@ -7,6 +7,7 @@ import type { ToastAlert } from '@/types';
 
 interface AlertContextValue {
   toasts: ToastAlert[];
+  leavingIds: string[];
   addToast: (toast: Omit<ToastAlert, 'id' | 'timestamp'>) => void;
   removeToast: (id: string) => void;
   clearAll: () => void;
@@ -14,13 +15,27 @@ interface AlertContextValue {
 
 const AlertContext = createContext<AlertContextValue>({
   toasts: [],
+  leavingIds: [],
   addToast: () => {},
   removeToast: () => {},
   clearAll: () => {},
 });
 
+const EXIT_ANIM_MS = 380; // must match the .alert-exit animation duration
+
 export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastAlert[]>([]);
+  const [leavingIds, setLeavingIds] = useState<string[]>([]);
+
+  // Mark a toast as "leaving" (play exit animation), then remove it after the
+  // animation finishes. Used by both the manual dismiss (X) and auto-close.
+  const removeToast = useCallback((id: string) => {
+    setLeavingIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+      setLeavingIds((prev) => prev.filter((x) => x !== id));
+    }, EXIT_ANIM_MS);
+  }, []);
 
   const addToast = useCallback((toast: Omit<ToastAlert, 'id' | 'timestamp'>) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -31,22 +46,21 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
       return next;
     });
 
-    // Auto-dismiss after 8 seconds unless autoClose is false
+    // Auto-dismiss after 4 seconds unless autoClose is false
     if (toast.autoClose !== false) {
       setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 8000);
+        removeToast(id);
+      }, 4000);
     }
-  }, []);
+  }, [removeToast]);
 
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
-
-  const clearAll = useCallback(() => setToasts([]), []);
+  const clearAll = useCallback(() => {
+    const allIds = toasts.map((t) => t.id);
+    allIds.forEach(removeToast);
+  }, [toasts, removeToast]);
 
   return (
-    <AlertContext.Provider value={{ toasts, addToast, removeToast, clearAll }}>
+    <AlertContext.Provider value={{ toasts, leavingIds, addToast, removeToast, clearAll }}>
       {children}
     </AlertContext.Provider>
   );
