@@ -50,22 +50,22 @@ export function Analyze() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-text-primary">Batch Audio Analysis</h1>
-        <p className="text-xs text-text-secondary mt-1">
-          Upload recorded WAV/MP3 clips to generate full explainability and risk breakdown.
+      <div className="space-y-1">
+        <h1 className="display text-2xl text-text-primary">Analyze Audio</h1>
+        <p className="text-sm text-text-secondary">
+          Upload a voice clip to detect whether it is a real human or a cloned voice.
         </p>
       </div>
 
       {!result && !loading && (
-        <div className="card p-8 border-dashed border-2 border-bg-border hover:border-accent transition-colors flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-14 h-14 rounded-full bg-bg-surface flex items-center justify-center text-accent">
-            <Upload className="w-7 h-7" />
+        <div className="card p-10 flex flex-col items-center justify-center text-center space-y-5">
+          <div className="w-16 h-16 rounded-full bg-accent/15 border border-accent/25 flex items-center justify-center">
+            <Upload className="w-7 h-7 text-accent-soft" />
           </div>
 
-          <div className="space-y-1">
-            <h3 className="text-sm font-semibold text-text-primary">Upload Call Audio Recording</h3>
-            <p className="text-xs text-text-secondary max-w-sm">
+          <div className="relative space-y-1.5">
+            <h3 className="text-lg font-semibold text-text-primary">Upload Call Audio Recording</h3>
+            <p className="text-sm text-text-secondary max-w-sm">
               Supports WAV, MP3, FLAC, OGG up to 25MB. Audio is analyzed in memory and immediately discarded.
             </p>
           </div>
@@ -79,18 +79,18 @@ export function Analyze() {
           />
 
           {file ? (
-            <div className="p-3 bg-bg-surface rounded-lg border border-bg-border flex items-center gap-3 w-full max-w-md">
-              <FileAudio className="w-5 h-5 text-accent" />
+            <div className="relative p-3 rounded-2xl bg-glass/[0.05] border border-glass/10 flex items-center gap-3 w-full max-w-md">
+              <FileAudio className="w-5 h-5 text-accent-soft" />
               <div className="flex-1 text-left truncate">
-                <span className="text-xs font-semibold text-text-primary block truncate">{file.name}</span>
-                <span className="text-[10px] text-text-muted">{(file.size / (1024 * 1024)).toFixed(2)} MB</span>
+                <span className="text-sm font-medium text-text-primary block truncate">{file.name}</span>
+                <span className="text-xs text-text-muted">{(file.size / (1024 * 1024)).toFixed(2)} MB</span>
               </div>
-              <button onClick={handleAnalyze} className="btn btn-primary btn-sm">
+              <button onClick={handleAnalyze} className="btn btn-accent btn-sm">
                 Run Analysis
               </button>
             </div>
           ) : (
-            <label htmlFor="audio-upload" className="btn btn-primary cursor-pointer">
+            <label htmlFor="audio-upload" className="relative btn btn-accent cursor-pointer">
               Select Audio File
             </label>
           )}
@@ -103,32 +103,39 @@ export function Analyze() {
 
       {result && (
         <div className="space-y-6">
-          <div className="flex justify-between items-center bg-bg-surface p-4 rounded-xl border border-bg-border">
+          <div className="flex justify-between items-center glass p-4 rounded-2xl">
             <div className="flex items-center gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <span className="w-9 h-9 rounded-full bg-risk-low/10 border border-risk-low/20 flex items-center justify-center">
+                <CheckCircle2 className="w-4 h-4 text-risk-low" />
+              </span>
               <div>
-                <span className="text-xs font-semibold text-text-primary block">Analysis Complete</span>
-                <span className="text-[10px] text-text-muted font-mono">ID: {result.analysis_id}</span>
+                <span className="text-sm font-medium text-text-primary block">Analysis Complete</span>
+                <span className="text-xs text-text-muted font-mono">ID: {result.analysis_id}</span>
               </div>
             </div>
             <button onClick={handleReset} className="btn btn-ghost btn-sm flex items-center gap-1.5">
-              <RotateCcw className="w-3.5 h-3.5" /> Analyze Another Clip
+              <RotateCcw className="w-3.5 h-3.5" /> Analyze Another
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="card p-6 flex flex-col items-center justify-center space-y-4">
-              <RiskGauge score={result.risk_score} band={result.band} size={220} />
-              <div className="text-center space-y-2 max-w-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="card p-8 flex flex-col items-center justify-center space-y-5">
+              <div className="relative">
+                <RiskGauge score={result.risk_score} band={result.band} size={220} />
+              </div>
+              <div className="relative text-center space-y-2.5 max-w-xs">
                 <RiskBandBadge band={result.band} severity={result.severity} size="lg" />
-                <p className="text-xs text-text-secondary">
+                <p className="text-sm text-text-secondary">
                   {result.recommended_action || 'No additional threat escalation required.'}
                 </p>
               </div>
             </div>
 
             <div className="card p-6 space-y-4">
-              <h3 className="text-sm font-semibold text-text-primary">Extracted Authenticity Signals</h3>
+              <div>
+                <h3 className="text-base font-semibold text-text-primary">Authenticity Signals</h3>
+                <p className="text-xs text-text-muted mt-0.5">Four detectors, one verdict.</p>
+              </div>
               <SignalBreakdown signals={result.signals} />
             </div>
           </div>

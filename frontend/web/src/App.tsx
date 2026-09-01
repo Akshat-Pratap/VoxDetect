@@ -6,6 +6,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { OrganizationProvider } from '@/context/OrganizationContext';
 import { AlertProvider } from '@/context/AlertContext';
+import { ThemeProvider } from '@/context/ThemeContext';
 import { AppShell } from '@/components/layout/AppShell';
 
 import { Dashboard } from '@/pages/Dashboard';
@@ -20,22 +21,24 @@ import { NotFound } from '@/pages/NotFound';
 export function App() {
   return (
     <BrowserRouter>
-      <OrganizationProvider>
-        <AlertProvider>
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/live-call" element={<LiveCall />} />
-              <Route path="/analyze" element={<Analyze />} />
-              <Route path="/voiceprints" element={<Voiceprints />} />
-              <Route path="/alerts" element={<Alerts />} />
-              <Route path="/audit" element={<Audit />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </AlertProvider>
-      </OrganizationProvider>
+      <ThemeProvider>
+        <OrganizationProvider>
+          <AlertProvider>
+            <Routes>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/live-call" element={<LiveCall />} />
+                <Route path="/analyze" element={<Analyze />} />
+                <Route path="/voiceprints" element={<Voiceprints />} />
+                <Route path="/alerts" element={<Alerts />} />
+                <Route path="/audit" element={<Audit />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+          </AlertProvider>
+        </OrganizationProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

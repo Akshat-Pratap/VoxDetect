@@ -8,6 +8,7 @@ import { useOrganization } from '@/context/OrganizationContext';
 import { RiskBandBadge } from '@/components/risk/RiskBandBadge';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Select } from '@/components/ui/Select';
 import type { AlertRecord } from '@/types';
 import { Bell, Filter, ShieldAlert, RefreshCw } from 'lucide-react';
 
@@ -41,26 +42,28 @@ export function Alerts() {
     <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-text-primary">Alerts & Evidence Center</h1>
-          <p className="text-xs text-text-secondary mt-1">
+          <h1 className="display text-2xl text-text-primary">Alerts & Evidence Center</h1>
+          <p className="text-sm text-text-secondary mt-1">
             Historical log of flagged calls, risk scores, and recommended actions.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-bg-surface px-3 py-1.5 rounded-lg border border-bg-border text-xs">
+          <div className="flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-text-muted" />
-            <select
+            <Select
               value={severityFilter}
-              onChange={(e) => setSeverityFilter(e.target.value)}
-              className="bg-transparent text-text-primary focus:outline-none"
-            >
-              <option value="">All Severities</option>
-              <option value="critical">Critical</option>
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </select>
+              onChange={setSeverityFilter}
+              pill
+              ariaLabel="Filter by severity"
+              options={[
+                { value: '', label: 'All Severities' },
+                { value: 'critical', label: 'Critical' },
+                { value: 'high', label: 'High' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'low', label: 'Low' },
+              ]}
+            />
           </div>
 
           <button onClick={fetchAlerts} className="btn btn-ghost btn-sm flex items-center gap-1.5">
@@ -78,10 +81,10 @@ export function Alerts() {
           message="No suspicious or flagged voice activity recorded under this profile yet."
         />
       ) : (
-        <div className="card overflow-hidden p-0 border border-bg-border">
+        <div className="card overflow-hidden p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-text-secondary">
-              <thead className="bg-bg-surface border-b border-bg-border text-text-muted uppercase text-[10px] font-semibold">
+              <thead className="bg-glass/[0.03] border-b border-glass/[0.06] text-text-muted uppercase text-[10px] font-semibold">
                 <tr>
                   <th className="p-4">Timestamp</th>
                   <th className="p-4">Analysis ID</th>
@@ -91,9 +94,9 @@ export function Alerts() {
                   <th className="p-4">Latency</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-bg-border">
+              <tbody className="divide-y divide-white/[0.05]">
                 {alerts.map((item) => (
-                  <tr key={item.analysis_id} className="hover:bg-bg-surface/50 transition-colors">
+                  <tr key={item.analysis_id} className="hover:bg-glass/[0.03] transition-colors">
                     <td className="p-4 font-mono text-text-muted">
                       {new Date(item.created_at).toLocaleString()}
                     </td>

@@ -47,10 +47,10 @@ export function LiveCall() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-bg-border pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-glass/[0.07] pb-5">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold tracking-tight text-text-primary">
+            <h1 className="display text-2xl text-text-primary">
               Live Call Monitoring
             </h1>
             {isMonitoring && (
@@ -60,7 +60,7 @@ export function LiveCall() {
               </span>
             )}
           </div>
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-sm text-text-secondary mt-1">
             Real-time acoustic & prosody stream analysis for synthetic speech detection.
           </p>
         </div>
@@ -70,7 +70,7 @@ export function LiveCall() {
           {!isMonitoring ? (
             <button
               onClick={startMonitoring}
-              className="btn btn-primary btn-lg shadow-glow-medium flex items-center gap-2"
+              className="btn btn-primary btn-lg flex items-center gap-2"
             >
               <Mic className="w-5 h-5" />
               Start Live Monitoring
@@ -78,7 +78,7 @@ export function LiveCall() {
           ) : (
             <button
               onClick={stopMonitoring}
-              className="btn btn-danger btn-lg flex items-center gap-2 shadow-lg"
+              className="btn btn-danger btn-lg flex items-center gap-2"
             >
               <MicOff className="w-5 h-5" />
               Stop Monitoring
@@ -119,24 +119,24 @@ export function LiveCall() {
               </div>
 
               {/* Recommended Action Box */}
-              <div className="p-3.5 rounded-lg bg-bg-surface border border-bg-border space-y-1.5">
+              <div className="p-4 rounded-2xl bg-glass/[0.04] border border-glass/[0.06] space-y-1.5">
                 <span className="text-[11px] font-semibold text-text-secondary uppercase tracking-wider flex items-center gap-1.5">
-                  <Info className="w-3.5 h-3.5 text-accent" /> Policy Action ({org.toUpperCase()})
+                  <Info className="w-3.5 h-3.5 text-accent-soft" /> Policy Action ({org.toUpperCase()})
                 </span>
-                <p className="text-xs font-medium text-text-primary leading-relaxed">
+                <p className="text-sm font-medium text-text-primary leading-relaxed">
                   {recommendedAction || orgPolicy.actions[band as keyof typeof orgPolicy.actions] || 'Awaiting live audio chunks for risk evaluation.'}
                 </p>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                <div className="p-2 rounded bg-bg-surface border border-bg-border">
+              <div className="grid grid-cols-2 gap-2.5 text-xs">
+                <div className="p-3 rounded-2xl bg-glass/[0.03] border border-glass/[0.06]">
                   <span className="text-text-muted block">Chunks Analyzed</span>
-                  <span className="font-mono font-bold text-text-primary">{chunkCount}</span>
+                  <span className="font-mono font-bold text-text-primary text-base">{chunkCount}</span>
                 </div>
-                <div className="p-2 rounded bg-bg-surface border border-bg-border">
+                <div className="p-3 rounded-2xl bg-glass/[0.03] border border-glass/[0.06]">
                   <span className="text-text-muted block">Connection</span>
-                  <span className="font-mono font-bold text-accent capitalize">{wsStatus}</span>
+                  <span className="font-mono font-bold text-accent-soft capitalize">{wsStatus}</span>
                 </div>
               </div>
             </div>
@@ -186,11 +186,11 @@ export function LiveCall() {
               ].map((item) => (
                 <label
                   key={item.id}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-bg-surface border border-bg-border hover:border-bg-elevated cursor-pointer transition-colors"
+                  className="flex items-center justify-between p-3 rounded-2xl bg-glass/[0.03] border border-glass/[0.06] hover:bg-glass/[0.06] cursor-pointer transition-colors"
                 >
                   <div className="pr-3">
-                    <span className="text-xs font-medium text-text-primary block">{item.label}</span>
-                    <span className="text-[10px] text-text-muted block">{item.desc}</span>
+                    <span className="text-sm font-medium text-text-primary block">{item.label}</span>
+                    <span className="text-xs text-text-muted block mt-0.5">{item.desc}</span>
                   </div>
                   <input
                     type="checkbox"
@@ -201,7 +201,7 @@ export function LiveCall() {
                         [item.id]: e.target.checked,
                       }))
                     }
-                    className="w-4 h-4 rounded bg-bg-card border-bg-border text-accent focus:ring-0 cursor-pointer"
+                    className="w-4 h-4 rounded accent-accent cursor-pointer"
                   />
                 </label>
               ))}

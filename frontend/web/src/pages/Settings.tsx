@@ -5,6 +5,7 @@
 import React from 'react';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useHealthCheck } from '@/hooks/useHealthCheck';
+import { Select } from '@/components/ui/Select';
 import { ORG_CONFIGS, OrgType } from '@/types';
 import { Settings as SettingsIcon, Sliders, Shield, Database, Radio } from 'lucide-react';
 
@@ -16,8 +17,8 @@ export function Settings() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-text-primary">System Settings & Policies</h1>
-        <p className="text-xs text-text-secondary mt-1">
+        <h1 className="display text-2xl text-text-primary">System Settings & Policies</h1>
+        <p className="text-sm text-text-secondary mt-1">
           Configure active organization response matrix and backend connection endpoints.
         </p>
       </div>
@@ -25,7 +26,7 @@ export function Settings() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Organization Matrix */}
         <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-bg-border pb-3">
+          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
             <Sliders className="w-5 h-5 text-accent" />
             <h2 className="text-sm font-bold text-text-primary">Organization Threat Matrix</h2>
           </div>
@@ -33,15 +34,17 @@ export function Settings() {
           <div className="space-y-3">
             <div>
               <label className="text-xs text-text-secondary block mb-1">Active Organization Profile</label>
-              <select
+              <Select
                 value={org}
-                onChange={(e) => setOrg(e.target.value as OrgType)}
-                className="input font-semibold"
-              >
-                <option value="bank">Bank (Strict Financial Thresholds)</option>
-                <option value="enterprise">Enterprise (Standard Identity Verification)</option>
-                <option value="government">Government (Maximum Security Escalation)</option>
-              </select>
+                onChange={(v) => setOrg(v as OrgType)}
+                fullWidth
+                ariaLabel="Active organization profile"
+                options={[
+                  { value: 'bank', label: 'Bank', sublabel: 'Strict Financial Thresholds' },
+                  { value: 'enterprise', label: 'Enterprise', sublabel: 'Standard Identity Verification' },
+                  { value: 'government', label: 'Government', sublabel: 'Maximum Security Escalation' },
+                ]}
+              />
             </div>
 
             <div className="p-3 bg-bg-surface rounded-lg border border-bg-border text-xs space-y-2">
@@ -68,7 +71,7 @@ export function Settings() {
 
         {/* System Topology */}
         <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-bg-border pb-3">
+          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
             <Radio className="w-5 h-5 text-accent" />
             <h2 className="text-sm font-bold text-text-primary">Connection Endpoints</h2>
           </div>

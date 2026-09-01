@@ -112,7 +112,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
         <path
           d={bgArc}
           fill="none"
-          stroke="rgba(255,255,255,0.06)"
+          stroke="var(--gauge-track)"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
@@ -135,7 +135,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
               y1={inner.y}
               x2={outer.x}
               y2={outer.y}
-              stroke="rgba(255,255,255,0.15)"
+              stroke="var(--gauge-track-strong)"
               strokeWidth={1.5}
             />
           );
@@ -150,7 +150,6 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
             strokeWidth={strokeWidth}
             strokeLinecap="round"
             style={{
-              filter: `drop-shadow(0 0 ${size * 0.04}px ${color})`,
               transition: 'stroke 0.5s ease, d 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           />
@@ -164,7 +163,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
           dominantBaseline="middle"
           fontSize={scoreFontSize}
           fontWeight="700"
-          fill={score !== null ? color : 'rgba(255,255,255,0.2)'}
+          fill={score !== null ? color : 'var(--gauge-label)'}
           fontFamily="Inter, system-ui, sans-serif"
           style={{
             fontVariantNumeric: 'tabular-nums',
@@ -183,7 +182,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
             dominantBaseline="middle"
             fontSize={labelFontSize}
             fontWeight="500"
-            fill="rgba(255,255,255,0.35)"
+            fill="var(--gauge-label)"
             fontFamily="Inter, system-ui, sans-serif"
           >
             / 100
@@ -195,7 +194,7 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
         <div className="text-center space-y-1">
           <div
             className="text-sm font-bold tracking-wider transition-colors duration-500"
-            style={{ color: score !== null ? color : 'rgba(255,255,255,0.3)' }}
+            style={{ color: score !== null ? color : 'rgb(var(--text-muted) / 0.5)' }}
           >
             {bandLabel}
           </div>

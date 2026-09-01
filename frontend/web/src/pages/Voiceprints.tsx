@@ -58,8 +58,8 @@ export function Voiceprints() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-text-primary">Voiceprint Management</h1>
-        <p className="text-xs text-text-secondary mt-1">
+        <h1 className="display text-2xl text-text-primary">Voiceprint Management</h1>
+        <p className="text-sm text-text-secondary mt-1">
           Register and verify known trusted contacts using ECAPA-TDNN speaker embeddings.
         </p>
       </div>
@@ -67,7 +67,7 @@ export function Voiceprints() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Enroll Form */}
         <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-bg-border pb-3">
+          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
             <UserPlus className="w-5 h-5 text-accent" />
             <h2 className="text-sm font-bold text-text-primary">Enroll Trusted Contact</h2>
           </div>
@@ -128,7 +128,7 @@ export function Voiceprints() {
 
         {/* Lookup Profile */}
         <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-bg-border pb-3">
+          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
             <Search className="w-5 h-5 text-accent" />
             <h2 className="text-sm font-bold text-text-primary">Lookup Voiceprint Profile</h2>
           </div>
