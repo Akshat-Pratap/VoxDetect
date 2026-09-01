@@ -59,6 +59,7 @@ class AnalysisService:
         context: Optional[dict[str, Any]],
         session: AsyncSession,
         enrolled_embedding: Optional[list[float]] = None,
+        fusion: Optional[dict[str, bool]] = None,
     ) -> AnalysisResponse:
         """
         Full analysis pipeline.
@@ -71,6 +72,8 @@ class AnalysisService:
             session:           Database session.
             enrolled_embedding: If the context references a speaker, the embedding
                                resolved from the DB is passed here for ML comparison.
+            fusion:            Optional signal->bool mask enabling a multi-signal
+                               weighted verdict instead of the raw classifier alone.
 
         Returns:
             AnalysisResponse ready to send to the client.
@@ -95,7 +98,9 @@ class AnalysisService:
         ml_error_msg: str | None = None
 
         try:
-            ml_result = await self._ml.analyze_file(audio_bytes, context=ml_context)
+            ml_result = await self._ml.analyze_file(
+                audio_bytes, context=ml_context, fusion=fusion
+            )
         except MLServiceUnavailable as exc:
             ml_error_code = "ML_SERVICE_UNAVAILABLE"
             ml_error_msg = str(exc)

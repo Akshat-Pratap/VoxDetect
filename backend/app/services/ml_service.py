@@ -98,20 +98,114 @@ def _safe_float(val: Any) -> float | None:
 # Validated on a live 60-clip sweep through this API: real max 7.36, clone min 7.86.
 VERDICT_CUTOFF = 7.5
 
+# Verdict band ladder (unified with org severity + frontend gauge):
+#   < 7.5  -> low      (authentic, not flagged)
+#   7.5-24 -> medium   (possible anomaly, monitor, NOT flagged)
+#   25-84  -> high     (likely clone, flagged)
+#   >= 85  -> critical (definite clone, strongly flagged)
+BAND_LOW_MAX = 7.5
+BAND_MEDIUM_MAX = 25.0
+BAND_HIGH_MAX = 85.0
+
 
 def _band_from_risk(risk: float | None) -> str | None:
-    """Map the verdict risk (0-100) to a band aligned with the validated cutoff.
+    """Map the verdict risk (0-100) to a unified band ladder.
 
-    Real clips (< 7.5) -> low (authentic); cloned clips (>= 7.5) -> high (flagged).
-    This keeps the gauge band, badge and `flagged` all driven by the raw
-    classifier, which is the reliable signal on this dataset.
+    Clean real clips land < 7.5 (authentic). A second, mid band (7.5-24)
+    captures borderline / noisy real-world audio without false-flagging it,
+    and a strong high/critical band catches genuine clones. This replaces the
+    old hard binary so a real voice scoring, say, 10 on a noisy mic shows
+    MEDIUM ("anomalies detected — monitor") instead of a false HIGH.
     """
     if risk is None:
         return None
-    return "low" if risk < VERDICT_CUTOFF else "high"
+    if risk < BAND_LOW_MAX:
+        return "low"
+    if risk < BAND_MEDIUM_MAX:
+        return "medium"
+    if risk < BAND_HIGH_MAX:
+        return "high"
+    return "critical"
 
 
-def _normalise(raw: dict[str, Any]) -> NormalisedResult:
+# ── Fusion (multi-signal verdict) ───────────────────────────────────────
+# Default fusion weights — alignment with ml-core's DEFAULT_WEIGHTS. When the
+# user enables multi-signal fusion in Settings, the verdict is a weighted sum
+# of the enabled signals instead of the raw classifier alone. Enabled signals
+# are renormalised to their relative share so the result stays on 0-100.
+FUSION_WEIGHTS = {
+    "model": 0.70,
+    "prosody_anomaly": 0.15,
+    "voiceprint_risk": 0.10,
+    "context_risk": 0.05,
+}
+
+
+def _fuse_risk(
+    signals: dict[str, Any],
+    enabled: dict[str, bool] | None,
+) -> float | None:
+    """Return a fused 0-100 risk from the 4 signals and an 'enabled' mask.
+
+    When `enabled` is None, or only the model signal is enabled, falls back to
+    the raw deepfake classifier (model signal) so existing behaviour and the
+    documented default (real ~7, clone ~85) are preserved. Fusion only engages
+    once a secondary signal (prosody/voiceprint/context) is also enabled: the
+    enabled signals vote with weights renormalised to sum 1.0, then squashed
+    through the same sigmoid used by ml-core:
+        raw  = sum(weight * signal)
+        risk = 100 * sigmoid(4 * (raw - 0.5))
+    """
+    if enabled is None:
+        return _model_risk(signals)
+
+    # Only the model enabled -> keep the raw classifier as the verdict.
+    secondary_on = any(
+        enabled.get(k) for k in ("prosody_anomaly", "voiceprint_risk", "context_risk")
+    )
+    if not secondary_on:
+        return _model_risk(signals)
+
+    # Only signals explicitly enabled AND having a finite value can vote.
+    active_sigs: dict[str, float] = {}
+    for key, weight in FUSION_WEIGHTS.items():
+        if enabled.get(key) and signals.get(key) is not None:
+            val = signals[key]
+            try:
+                if _safe_float(val) is not None:
+                    active_sigs[key] = float(val)
+            except (TypeError, ValueError):
+                continue
+
+    if not active_sigs:
+        return _model_risk(signals)
+
+    total_weight = sum(FUSION_WEIGHTS[k] for k in active_sigs)
+    if total_weight <= 0:
+        return _model_risk(signals)
+
+    raw = sum(
+        (FUSION_WEIGHTS[k] / total_weight) * v for k, v in active_sigs.items()
+    )
+    return 100.0 * _sigmoid(4.0 * (raw - 0.5))
+
+
+def _model_risk(signals: dict[str, Any]) -> float | None:
+    """Raw deepfake classifier scaled to 0-100 (the default verdict)."""
+    verdict_risk = signals.get("model")
+    return (verdict_risk * 100.0) if verdict_risk is not None else None
+
+
+def _sigmoid(x: float) -> float:
+    try:
+        from math import exp
+        return 1.0 / (1.0 + exp(-x))
+    except OverflowError:
+        return 1.0 if x > 0 else 0.0
+
+
+
+def _normalise(raw: dict[str, Any], fusion: dict[str, bool] | None = None) -> NormalisedResult:
     """
     Convert a raw P1 result dict into the stable backend representation.
 
@@ -127,6 +221,10 @@ def _normalise(raw: dict[str, Any]) -> NormalisedResult:
                 "context_risk": float,
             }
         }
+
+    `fusion` (optional): a dict of signal -> bool controlling which signals
+    vote in a weighted verdict. When None, the raw deepfake classifier alone
+    decides (see VERDICT POLICY note below).
     """
     models = raw.get("models") or {}
     signals = raw.get("signals") or {}
@@ -141,15 +239,16 @@ def _normalise(raw: dict[str, Any]) -> NormalisedResult:
     # The legacy fused risk_score (from ml-core's DEFAULT_WEIGHTS 0.7/0.15/0.10/0.05)
     # was NOT calibrated against real data and separates much worse (ACC ~90%,
     # FPR ~16.7%) because hand-tuned prosody/context heuristics drag real & cloned
-    # clips into overlap. So the verdict below maps synthetic_prob -> 0-100.
+    # clips into overlap. So by DEFAULT the verdict below maps synthetic_prob -> 0-100.
     #
-    # The other three signals (prosody/voiceprint/context) are still computed and
-    # surfaced in `signals` for transparency / future weights, but they do NOT
-    # drive the verdict. Weight tuning against real data is explicit future work.
-    #
-    # risk_score is synthetic_prob scaled to the 0-100 gauge the UI renders, so the
-    # gauge, band badge and `flagged` all agree with the classifier.
-    verdict_risk = (synthetic_prob * 100.0) if synthetic_prob is not None else None
+    # When the user EXPLICITLY enables a secondary signal via the `fusion` mask
+    # (the Settings "enable signal" toggles in the UI), _fuse_risk re-weights the
+    # enabled signals instead. With fusion=None or model-only, it returns the raw
+    # classifier (model * 100). The other signals are always computed and surfaced
+    # in `signals` for transparency, but only participate when enabled.
+    verdict_risk = _fuse_risk(signals, fusion)
+    if verdict_risk is None and synthetic_prob is not None:
+        verdict_risk = synthetic_prob * 100.0
     verdict_band = _band_from_risk(verdict_risk)
 
     return {
@@ -290,13 +389,16 @@ class MLService:
     # ── Sync inference helpers (run in thread pool) ───────────────────────
 
     def _sync_analyze_bytes(
-        self, audio_bytes: bytes, context: dict | None
+        self,
+        audio_bytes: bytes,
+        context: dict | None,
+        fusion: dict[str, bool] | None = None,
     ) -> NormalisedResult:
         """Synchronous inference from raw audio bytes.  Runs in thread pool."""
         self._require_engine()
         buf = io.BytesIO(audio_bytes)
         raw = self._engine.analyze_audio(buf, context=context)
-        return _normalise(raw)
+        return _normalise(raw, fusion=fusion)
 
     def _sync_analyze_array(
         self, wav, sr: int, context: dict | None
@@ -322,6 +424,7 @@ class MLService:
         audio_bytes: bytes,
         context: Optional[dict] = None,
         timeout: float = 60.0,
+        fusion: Optional[dict[str, bool]] = None,
     ) -> NormalisedResult:
         """
         Analyse an audio file supplied as raw bytes.
@@ -333,6 +436,7 @@ class MLService:
             audio_bytes: Raw audio file bytes (wav/mp3/flac/ogg).
             context:     Optional dict with metadata flags for the ML Core.
             timeout:     Maximum seconds to wait for inference.
+            fusion:      Optional signal->bool mask enabling multi-signal verdict.
 
         Returns:
             Normalised result dict.
@@ -351,6 +455,7 @@ class MLService:
                     self._sync_analyze_bytes,
                     audio_bytes,
                     context,
+                    fusion,
                 ),
                 timeout=timeout,
             )
@@ -369,6 +474,7 @@ class MLService:
         chunk_bytes: bytes,
         context: Optional[dict] = None,
         timeout: float = 30.0,
+        fusion: Optional[dict[str, bool]] = None,
     ) -> NormalisedResult:
         """
         Analyse a streaming audio chunk (2–3 seconds of PCM/audio bytes).
@@ -376,7 +482,9 @@ class MLService:
         Delegates to analyze_file — P1's analyze_chunk is the same path.
         Runs in the thread pool to keep the event loop unblocked.
         """
-        return await self.analyze_file(chunk_bytes, context=context, timeout=timeout)
+        return await self.analyze_file(
+            chunk_bytes, context=context, timeout=timeout, fusion=fusion
+        )
 
     async def enroll_voice(
         self,

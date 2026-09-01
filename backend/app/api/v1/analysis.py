@@ -43,6 +43,10 @@ async def analyze_call(
         default=None,
         description="JSON-encoded CallContext metadata (optional).",
     ),
+    fusion: Optional[str] = Form(
+        default=None,
+        description='JSON-encoded signal->bool mask enabling fusion (e.g. {"model":true,"prosody_anomaly":true,"voiceprint_risk":true,"context_risk":true}).',
+    ),
     session: AsyncSession = Depends(get_session),
 ) -> AnalysisResponse:
     """
@@ -52,6 +56,7 @@ async def analyze_call(
     - `file`: audio file (wav/mp3/flac/ogg ≤ MAX_UPLOAD_SIZE_MB)
     - `org`: organisation profile (bank | enterprise | government)
     - `context`: JSON string of CallContext (optional)
+    - `fusion`: JSON string of signal->bool mask enabling multi-signal verdict (optional)
 
     Returns a complete risk assessment.  Audio is deleted after processing.
     """
@@ -75,6 +80,30 @@ async def analyze_call(
                 detail={
                     "code": "INVALID_CONTEXT",
                     "message": "context must be a valid JSON-encoded CallContext object.",
+                },
+            )
+
+    # ── Parse fusion mask (optional) ──────────────────────────────────────
+    fusion_mask: Optional[dict[str, bool]] = None
+    if fusion:
+        try:
+            fusion_mask = json.loads(fusion)
+            if not isinstance(fusion_mask, dict):
+                raise ValueError("must be an object")
+            fusion_mask = {
+                k: bool(v)
+                for k, v in fusion_mask.items()
+                if k in ("model", "prosody_anomaly", "voiceprint_risk", "context_risk")
+            }
+        except Exception:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "INVALID_FUSION",
+                    "message": (
+                        "fusion must be a JSON object of signal->bool, e.g. "
+                        '{"model":true,"prosody_anomaly":true,"voiceprint_risk":true,"context_risk":true}.'
+                    ),
                 },
             )
 
@@ -103,4 +132,5 @@ async def analyze_call(
         context=ml_context_dict,
         session=session,
         enrolled_embedding=enrolled_embedding,
+        fusion=fusion_mask,
     )

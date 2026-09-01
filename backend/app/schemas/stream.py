@@ -18,6 +18,8 @@ class StreamMetadata(BaseModel):
     odd_hour: bool = False
     sensitive_data_request: bool = False
     enrolled_speaker_id: Optional[str] = None
+    # signal->bool mask controlling which signals vote in the verdict
+    fusion: Optional[dict[str, bool]] = None
 
 
 class StreamChunkResult(BaseModel):
