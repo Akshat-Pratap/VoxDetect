@@ -10,6 +10,7 @@ from jumping wildly between chunks.
 from __future__ import annotations
 
 import asyncio
+import io
 import json
 import statistics
 import uuid
@@ -31,6 +32,35 @@ from app.services.ml_service import (
 from app.services.organization_service import OrganizationService
 
 logger = get_logger(__name__)
+
+# Audio conversion: WebM/Opus (from browser MediaRecorder) -> WAV PCM for ML
+try:
+    from pydub import AudioSegment
+    PYDUB_AVAILABLE = True
+except ImportError:
+    PYDUB_AVAILABLE = False
+    logger.warning("pydub not available; WebM/Opus chunk decoding will fail. Install pydub + ffmpeg.")
+
+
+def _webm_opus_to_wav_pcm(chunk_bytes: bytes) -> bytes:
+    """
+    Convert WebM/Opus audio chunk (from browser MediaRecorder) to 16kHz mono WAV PCM bytes.
+
+    Returns raw WAV bytes suitable for the ML pipeline.
+    """
+    if not PYDUB_AVAILABLE:
+        raise RuntimeError("pydub not installed; cannot decode WebM/Opus audio chunks")
+
+    # Load WebM/Opus from bytes
+    webm_audio = AudioSegment.from_file(io.BytesIO(chunk_bytes), format="webm")
+
+    # Convert to 16kHz mono PCM (what the ML model expects)
+    wav_audio = webm_audio.set_frame_rate(16000).set_channels(1).set_sample_width(2)
+
+    # Export as WAV bytes
+    wav_bytes = io.BytesIO()
+    wav_audio.export(wav_bytes, format="wav")
+    return wav_bytes.getvalue()
 
 
 class StreamingSession:
@@ -148,11 +178,25 @@ class StreamingSession:
         chunk_idx = self._chunk_index
         self._chunk_index += 1
 
+        # Convert WebM/Opus (browser MediaRecorder) -> WAV PCM for ML
+        try:
+            wav_bytes = await asyncio.get_running_loop().run_in_executor(
+                None,
+                _webm_opus_to_wav_pcm,
+                chunk_bytes,
+            )
+        except Exception as exc:
+            await self._send_error("AUDIO_DECODE_ERROR", f"Failed to decode audio chunk: {type(exc).__name__}")
+            del chunk_bytes
+            return
+
+        del chunk_bytes  # free original
+
         try:
             ml_result = await asyncio.get_running_loop().run_in_executor(
                 None,
                 self._ml._sync_analyze_bytes,  # already thread-safe, reuse
-                chunk_bytes,
+                wav_bytes,
                 self._ml_context,
             )
         except (MLServiceUnavailable, MLServiceTimeout, MLServiceError) as exc:
