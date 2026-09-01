@@ -75,3 +75,5 @@ test_data.zip
 test_data.zip.manifest.json
 script.md
 qa.md
+# TypeScript incremental build cache
+frontend/web/*.tsbuildinfo
