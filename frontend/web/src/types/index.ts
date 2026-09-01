@@ -29,7 +29,7 @@ export interface OrgConfig {
 export const ORG_CONFIGS: Record<OrgType, OrgConfig> = {
   bank: {
     organization: 'bank',
-    thresholds: { low_max: 25, medium_max: 60, high_min: 60, critical_min: 85 },
+    thresholds: { low_max: 7.5, medium_max: 80, high_min: 7.5, critical_min: 85 },
     actions: {
       low: 'No action required. Transaction may proceed.',
       medium: 'Request secondary authentication before authorising transaction.',
@@ -39,7 +39,7 @@ export const ORG_CONFIGS: Record<OrgType, OrgConfig> = {
   },
   enterprise: {
     organization: 'enterprise',
-    thresholds: { low_max: 30, medium_max: 70, high_min: 70, critical_min: 90 },
+    thresholds: { low_max: 7.5, medium_max: 80, high_min: 7.5, critical_min: 85 },
     actions: {
       low: 'No action required. Continue normally.',
       medium: 'Apply additional identity verification before proceeding.',
@@ -49,7 +49,7 @@ export const ORG_CONFIGS: Record<OrgType, OrgConfig> = {
   },
   government: {
     organization: 'government',
-    thresholds: { low_max: 20, medium_max: 55, high_min: 55, critical_min: 80 },
+    thresholds: { low_max: 7.5, medium_max: 80, high_min: 7.5, critical_min: 85 },
     actions: {
       low: 'No action required. Continue processing.',
       medium: 'Initiate secondary biometric or document verification.',

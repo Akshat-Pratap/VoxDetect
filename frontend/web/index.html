@@ -7,6 +7,16 @@
     <meta name="description" content="VoxDetect — Real-time AI voice cloning detection and prevention for enterprise security." />
     <meta name="theme-color" content="#0d1117" />
     <title>VoxDetect — Voice Authenticity Monitor</title>
+    <script>
+      // Apply saved theme before first paint to avoid a dark/light flash.
+      (function () {
+        try {
+          var t = localStorage.getItem('voxdetect-theme');
+          var root = document.documentElement;
+          if (t === 'light') root.classList.add('light');
+        } catch (e) {}
+      })();
+    </script>
     <!-- Google Fonts: Inter + JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
