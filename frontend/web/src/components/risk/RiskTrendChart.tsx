@@ -28,7 +28,7 @@ export function RiskTrendChart({ data, threshold = 60 }: Props) {
 
   if (data.length === 0) {
     return (
-      <div className="h-44 flex items-center justify-center border border-dashed border-bg-border rounded-lg bg-bg-surface/50 text-text-muted text-xs">
+      <div className="h-44 flex items-center justify-center border border-dashed border-[rgb(var(--border-strong))] rounded-lg text-[rgb(var(--text-muted))] text-[11px]">
         No real-time data received yet. Start monitoring to stream scores.
       </div>
     );
@@ -41,15 +41,15 @@ export function RiskTrendChart({ data, threshold = 60 }: Props) {
           <defs>
             <linearGradient id="scoreGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+              <stop offset="95%" stopColor="#14b8a6" stopOpacity={0.0} />
             </linearGradient>
           </defs>
           <XAxis dataKey="time" hide />
-          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#8b949e' }} />
+          <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9a9a9a' }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: '#161b22',
-              borderColor: '#2a3144',
+              backgroundColor: '#1e1e1e',
+              borderColor: '#3c3c3c',
               borderRadius: '6px',
               fontSize: '12px',
               color: '#e6edf3',
@@ -66,7 +66,7 @@ export function RiskTrendChart({ data, threshold = 60 }: Props) {
           <Area
             type="monotone"
             dataKey="rolling"
-            stroke="#3b82f6"
+            stroke="#14b8a6"
             strokeWidth={2}
             fillOpacity={1}
             fill="url(#scoreGradient)"

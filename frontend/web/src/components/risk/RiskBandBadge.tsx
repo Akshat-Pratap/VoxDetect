@@ -1,6 +1,6 @@
 /**
  * src/components/risk/RiskBandBadge.tsx
- * Displays a risk band badge with appropriate color and icon.
+ * Compact risk band badge with SOC-appropriate colors.
  */
 import React from 'react';
 
@@ -13,34 +13,34 @@ interface Props {
 const BAND_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
   low: {
     label: 'LOW',
-    color: 'text-green-400',
-    bg: 'bg-green-500/10',
-    border: 'border-green-500/25',
+    color: 'text-[rgb(var(--risk-low))]',
+    bg: 'bg-[rgb(var(--risk-low-bg))]',
+    border: 'border-[rgb(var(--risk-low))] border-opacity-20',
   },
   medium: {
-    label: 'MEDIUM',
-    color: 'text-yellow-400',
-    bg: 'bg-yellow-500/10',
-    border: 'border-yellow-500/25',
+    label: 'MED',
+    color: 'text-[rgb(var(--risk-medium))]',
+    bg: 'bg-[rgb(var(--risk-medium-bg))]',
+    border: 'border-[rgb(var(--risk-medium))] border-opacity-20',
   },
   high: {
     label: 'HIGH',
-    color: 'text-red-400',
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/25',
+    color: 'text-[rgb(var(--risk-high))]',
+    bg: 'bg-[rgb(var(--risk-high-bg))]',
+    border: 'border-[rgb(var(--risk-high))] border-opacity-20',
   },
   critical: {
-    label: 'CRITICAL',
-    color: 'text-red-300',
-    bg: 'bg-red-900/30',
-    border: 'border-red-400/40',
+    label: 'CRIT',
+    color: 'text-[rgb(var(--risk-critical))]',
+    bg: 'bg-[rgb(var(--risk-critical-bg))]',
+    border: 'border-[rgb(var(--risk-critical))] border-opacity-25',
   },
 };
 
 const SIZE_CLASS = {
-  sm: 'text-[10px] px-2 py-0.5',
-  md: 'text-xs px-2.5 py-1',
-  lg: 'text-sm px-3 py-1.5',
+  sm: 'text-[9px] px-1.5 py-0.5',
+  md: 'text-[10px] px-2 py-0.5',
+  lg: 'text-xs px-2.5 py-1',
 };
 
 export function RiskBandBadge({ band, severity, size = 'md' }: Props) {
@@ -49,12 +49,12 @@ export function RiskBandBadge({ band, severity, size = 'md' }: Props) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full border font-semibold tracking-wider
+      className={`inline-flex items-center gap-1 rounded border font-semibold font-mono tracking-wider
         ${config.color} ${config.bg} ${config.border} ${SIZE_CLASS[size]}`}
       role="status"
       aria-label={`Risk level: ${config.label}`}
     >
-      {config.label} RISK
+      {config.label}
     </span>
   );
 }

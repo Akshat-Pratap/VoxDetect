@@ -1,8 +1,11 @@
 /**
  * components/risk/AudioVisualizer.tsx
- * Live "mic is detecting" visualizer: animated waveform bars + pulsing ring.
+ * Live "mic is detecting" visualizer.
+ * The MIC is the animation — it "beeps" (scale pulse) with sonar rings when
+ * active. The waveform equalizer bars stay still so the signal reads as
+ * steady monitoring, not a moving curve.
  * Colored by the current risk band. Pure CSS animations (GPU-accelerated,
- * transform/opacity only) so it stays buttery at 60fps. Respects reduced motion.
+ * transform/opacity only). Respects reduced motion.
  */
 import React from 'react';
 import { Mic } from 'lucide-react';
@@ -17,62 +20,66 @@ const BAR_COUNT = 21;
 
 export function AudioVisualizer({ active, band, flagged }: AudioVisualizerProps) {
   const tone = flagged || band === 'high' || band === 'critical' ? 'risk' : 'safe';
-  const ring =
+
+  const ringClass =
     tone === 'risk'
-      ? 'from-red-500/50 via-red-500/20 to-transparent'
-      : 'from-emerald-500/50 via-emerald-500/20 to-transparent';
-  const barTone = tone === 'risk' ? 'bg-red-400' : 'bg-emerald-400';
+      ? 'border-[rgb(var(--risk-critical))] bg-[rgb(var(--risk-critical))] bg-opacity-10'
+      : 'border-[rgb(var(--accent))] bg-[rgb(var(--accent))] bg-opacity-10';
+
+  const capsuleClass = active
+    ? tone === 'risk'
+      ? 'border-[rgba(239,68,68,0.35)] bg-[rgba(239,68,68,0.12)] shadow-[0_0_32px_-6px_rgba(239,68,68,0.5)]'
+      : 'border-[rgba(20,184,166,0.35)] bg-[rgba(20,184,166,0.12)] shadow-[0_0_32px_-6px_rgba(20,184,166,0.5)]'
+    : 'border-[rgb(var(--border-subtle))] bg-[var(--hover-bg)]';
+
+  const micClass = active
+    ? tone === 'risk'
+      ? 'text-[rgb(var(--risk-critical))]'
+      : 'text-[rgb(var(--accent-soft))]'
+    : 'text-[rgb(var(--text-muted))]';
+
+  const barClass =
+    tone === 'risk'
+      ? 'bg-[rgb(var(--risk-critical))] bg-opacity-70'
+      : 'bg-[rgb(var(--accent))] bg-opacity-70';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 select-none">
-      {/* Pulsing ring + mic */}
-      <div className="relative w-28 h-28 flex items-center justify-center">
-        {/* Expanding detection pulse (only when active) */}
+    <div className="flex flex-col items-center justify-center gap-5 select-none">
+      {/* Sonar rings + beeping mic */}
+      <div className="relative w-32 h-32 flex items-center justify-center">
         {active && (
-          <span
-            className={`absolute inset-0 rounded-full bg-gradient-to-br ${ring} animate-[vox-ring_1.8s_ease-out_infinite]`}
-            aria-hidden="true"
-          />
+          <>
+            <span
+              aria-hidden="true"
+              className={`absolute inset-0 rounded-full border ${ringClass} animate-[vox-ring_2s_ease-out_infinite]`}
+            />
+            <span
+              aria-hidden="true"
+              className={`absolute inset-0 rounded-full border ${ringClass} animate-[vox-ring_2s_ease-out_1s_infinite]`}
+            />
+          </>
         )}
-        {/* Mic capsule */}
+
+        {/* Mic capsule — the beep */}
         <div
-          className={`relative z-10 w-20 h-20 rounded-full flex items-center justify-center transition-colors duration-300 ${
-            active
-              ? tone === 'risk'
-                ? 'bg-red-500/15 shadow-[0_0_30px_-5px_rgba(239,68,68,0.4)]'
-                : 'bg-emerald-500/15 shadow-[0_0_30px_-5px_rgba(16,185,129,0.4)]'
-              : ''
-          }`}
+          className={`relative z-10 w-20 h-20 rounded-full border flex items-center justify-center transition-colors duration-300 ${
+            capsuleClass
+          } ${active ? 'animate-[vox-beep_1s_ease-in-out_infinite]' : ''}`}
         >
-          <Mic
-            className={`w-9 h-9 ${
-              active
-                ? tone === 'risk'
-                  ? 'text-red-400'
-                  : 'text-emerald-400'
-                : 'text-emerald-500'
-            }`}
-          />
+          <Mic className={`w-8 h-8 ${micClass}`} strokeWidth={1.8} />
         </div>
       </div>
 
-      {/* Waveform bars */}
-      <div className="flex items-center gap-1 h-12" aria-hidden="true">
+      {/* Static equalizer — bars stay still, the mic is what "beeps" */}
+      <div className="flex items-end gap-[5px] h-10" aria-hidden="true">
         {Array.from({ length: BAR_COUNT }).map((_, i) => {
-          // Deterministic per-bar peak so the idle bars are still varied
+          // Deterministic per-bar peak so the bars still read as an equalizer
           const peak = 0.35 + 0.65 * Math.abs(Math.sin(i * 1.7 + 0.4));
-          const delay = (i % 7) * 0.09;
           return (
             <span
               key={i}
-              className={`w-1.5 rounded-full ${barTone} ${
-                active ? 'animate-[vox-bar_1.1s_ease-in-out_infinite]' : ''
-              }`}
-              style={{
-                height: active ? undefined : `${Math.round(20 + peak * 28)}px`,
-                animationDelay: active ? `${delay}s` : undefined,
-                animationDuration: '1.1s',
-              }}
+              className={`w-[5px] rounded-full ${barClass}`}
+              style={{ height: `${Math.round(14 + peak * 26)}px` }}
             />
           );
         })}

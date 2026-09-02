@@ -1,5 +1,12 @@
 /**
- * src/components/layout/AppShell.tsx
+ * src/components/layout/AppShell.tsx — Google Colab layout
+ *
+ * Structure:
+ *   Viewport (full screen, bg-frame-bg)
+ *     ├─ TopBar (full width, flush to top/left/right window edges)
+ *     └─ Body row
+ *          ├─ Sidebar (flush to left/bottom window edges)
+ *          └─ Main content well (recessed with rounded corners, only area that scrolls)
  */
 import React from 'react';
 import { Outlet } from 'react-router-dom';
@@ -9,23 +16,26 @@ import { AlertContainer } from '../alerts/AlertContainer';
 
 export function AppShell() {
   return (
-    <div className="relative h-screen w-screen overflow-hidden text-text-primary">
-      {/* Ambient background */}
-      <div className="ambient" aria-hidden="true" />
-      <div className="grain" aria-hidden="true" />
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-[rgb(var(--frame-bg))]">
+      {/* Topbar — flush to top window edge */}
+      <TopBar />
 
-      <div className="relative z-10 flex h-full w-full">
+      {/* Body: sidebar (flush left) + recessed content well */}
+      <div className="flex flex-1 min-h-0">
+        {/* Sidebar — flush to left and bottom window edges */}
         <Sidebar />
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-          <TopBar />
-          <main className="flex-1 overflow-y-auto p-6 md:p-8">
-            <div className="page-enter h-full">
+
+        {/* Content well — inset with rounded corners, this is the only scrolling area */}
+        <main className="flex-1 min-w-0 min-h-0 pr-3 pb-3 pt-0 pl-1">
+          <div className="h-full w-full overflow-y-auto rounded-2xl bg-[rgb(var(--bg-surface))] border border-black/5 dark:border-white/[0.08] shadow-sm">
+            <div className="page-enter p-6 sm:p-7">
               <Outlet />
             </div>
-          </main>
-        </div>
+          </div>
+        </main>
       </div>
 
+      {/* Toast notifications */}
       <AlertContainer />
     </div>
   );

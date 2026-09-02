@@ -1,12 +1,11 @@
 /**
- * src/pages/Voiceprints.tsx
- * Trusted speaker enrollment interface.
+ * src/pages/Voiceprints.tsx — Trusted speaker enrollment
  */
 import React, { useState } from 'react';
 import { enrollSpeaker, getSpeaker } from '@/services/api';
 import { LoadingState } from '@/components/ui/LoadingState';
 import { ErrorState } from '@/components/ui/ErrorState';
-import { UserPlus, UserCheck, Shield, Mic, CheckCircle2, Search } from 'lucide-react';
+import { UserPlus, UserCheck, CheckCircle2, Search } from 'lucide-react';
 
 export function Voiceprints() {
   const [speakerId, setSpeakerId] = useState('');
@@ -16,7 +15,6 @@ export function Voiceprints() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Lookup state
   const [lookupId, setLookupId] = useState('');
   const [lookupResult, setLookupResult] = useState<any>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -56,67 +54,69 @@ export function Voiceprints() {
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="space-y-4 max-w-5xl mx-auto">
       <div>
-        <h1 className="display text-2xl text-text-primary">Voiceprint Management</h1>
-        <p className="text-sm text-text-secondary mt-1">
-          Register and verify known trusted contacts using ECAPA-TDNN speaker embeddings.
+        <h1 className="text-lg font-semibold text-[rgb(var(--text-primary))]">Voiceprint Management</h1>
+        <p className="text-xs text-[rgb(var(--text-muted))] mt-0.5">
+          Register and verify known trusted speakers
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Enroll Form */}
-        <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
-            <UserPlus className="w-5 h-5 text-accent" />
-            <h2 className="text-sm font-bold text-text-primary">Enroll Trusted Contact</h2>
+      {/* Compact single card with two divided panes */}
+      <div className="card grid grid-cols-1 md:grid-cols-2">
+        {/* Enroll pane */}
+        <div className="md:pr-5 pb-5 md:pb-0 md:mr-5">
+          <div className="flex items-center gap-2 mb-4">
+            <UserPlus className="w-4 h-4 text-[rgb(var(--accent-soft))]" />
+            <h2 className="text-sm font-semibold text-[rgb(var(--text-primary))]">Enroll Trusted Contact</h2>
           </div>
 
           {success && (
-            <div className="p-3 bg-green-950/80 border border-green-800 rounded-lg text-xs text-green-200 flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+            <div className="p-2.5 rounded-md bg-[rgba(34,197,94,0.1)] border border-[rgba(34,197,94,0.2)] text-xs text-green-300 flex items-center gap-2 mb-3">
+              <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
               <span>{success}</span>
             </div>
           )}
 
-          {error && <ErrorState message={error} />}
+          {error && <div className="mb-3"><ErrorState message={error} /></div>}
 
           <form onSubmit={handleEnroll} className="space-y-4">
-            <div>
-              <label className="text-xs text-text-secondary block mb-1">Speaker ID (Unique identifier)</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. exec-john-doe"
-                value={speakerId}
-                onChange={(e) => setSpeakerId(e.target.value)}
-                className="input"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] text-[rgb(var(--text-muted))] block mb-1.5">Speaker ID</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="exec-john-doe"
+                  value={speakerId}
+                  onChange={(e) => setSpeakerId(e.target.value)}
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] text-[rgb(var(--text-muted))] block mb-1.5">Display Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="John Doe (CFO)"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="input"
+                />
+              </div>
             </div>
 
             <div>
-              <label className="text-xs text-text-secondary block mb-1">Display Name</label>
-              <input
-                type="text"
-                required
-                placeholder="e.g. John Doe (CFO)"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="input"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-text-secondary block mb-1">Voice Sample (WAV/MP3)</label>
+              <label className="text-[11px] text-[rgb(var(--text-muted))] block mb-1.5">Voice Sample</label>
               <input
                 type="file"
                 required
                 accept="audio/*"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="block w-full text-xs text-text-secondary file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-bg-elevated file:text-text-primary hover:file:bg-bg-border cursor-pointer"
+                className="block w-full text-xs text-[rgb(var(--text-secondary))] file:mr-3 file:py-2 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-[var(--hover-bg)] file:text-[rgb(var(--text-primary))] hover:file:bg-[var(--hover-bg-strong)] cursor-pointer"
               />
-              <span className="text-[10px] text-text-muted mt-1 block">
-                Embedding extracted in-memory. Audio sample is discarded immediately after.
+              <span className="text-[10px] text-[rgb(var(--text-muted))] mt-2 block">
+                Embedding extracted in-memory. Audio discarded immediately.
               </span>
             </div>
 
@@ -126,11 +126,11 @@ export function Voiceprints() {
           </form>
         </div>
 
-        {/* Lookup Profile */}
-        <div className="card p-6 space-y-4">
-          <div className="flex items-center gap-2 border-b border-glass/[0.07] pb-3">
-            <Search className="w-5 h-5 text-accent" />
-            <h2 className="text-sm font-bold text-text-primary">Lookup Voiceprint Profile</h2>
+        {/* Lookup pane */}
+        <div className="md:pl-5 pt-5 md:pt-0 border-t md:border-t-0 md:border-l border-[rgb(var(--border-subtle))]">
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="w-4 h-4 text-[rgb(var(--accent-soft))]" />
+            <h2 className="text-sm font-semibold text-[rgb(var(--text-primary))]">Lookup Profile</h2>
           </div>
 
           <form onSubmit={handleLookup} className="flex gap-2">
@@ -142,37 +142,34 @@ export function Voiceprints() {
               onChange={(e) => setLookupId(e.target.value)}
               className="input flex-1"
             />
-            <button type="submit" disabled={lookupLoading} className="btn btn-ghost">
+            <button type="submit" disabled={lookupLoading} className="btn btn-primary">
+              {lookupLoading ? <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" /> : <Search className="w-3.5 h-3.5" />}
               Search
             </button>
           </form>
 
-          {lookupLoading && <LoadingState message="Looking up profile..." />}
+          {lookupLoading && <div className="mt-3"><LoadingState message="Looking up..." /></div>}
 
           {lookupResult && !lookupResult.notFound && (
-            <div className="p-4 bg-bg-surface rounded-xl border border-bg-border space-y-2">
-              <div className="flex items-center gap-2 text-green-400 font-bold text-xs">
-                <UserCheck className="w-4 h-4" /> Active Voiceprint Enrolled
+            <div className="mt-3 p-3 rounded-md bg-[var(--hover-bg)] border border-[rgb(var(--border-subtle))] space-y-1.5">
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-[rgb(var(--risk-low))]">
+                <UserCheck className="w-3.5 h-3.5" /> Enrolled
               </div>
-              <div className="text-xs space-y-1">
+              <div className="text-[11px] space-y-1">
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Display Name:</span>
-                  <span className="font-semibold text-text-primary">{lookupResult.display_name}</span>
+                  <span className="text-[rgb(var(--text-muted))]">Name</span>
+                  <span className="font-semibold text-[rgb(var(--text-primary))]">{lookupResult.display_name}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Speaker ID:</span>
-                  <span className="font-mono text-text-primary">{lookupResult.speaker_id}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Enrolled At:</span>
-                  <span className="text-text-secondary">{new Date(lookupResult.created_at).toLocaleString()}</span>
+                  <span className="text-[rgb(var(--text-muted))]">ID</span>
+                  <span className="font-mono text-[rgb(var(--text-primary))]">{lookupResult.speaker_id}</span>
                 </div>
               </div>
             </div>
           )}
 
           {lookupResult?.notFound && (
-            <div className="p-3 bg-red-950/50 border border-red-800/50 rounded-lg text-xs text-red-300">
+            <div className="mt-3 p-2.5 rounded-md bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] text-xs text-red-300">
               {lookupResult.message}
             </div>
           )}

@@ -1,33 +1,28 @@
 /**
  * src/components/risk/RiskGauge.tsx
- * Animated SVG arc gauge displaying risk score 0–100.
- * Color transitions smoothly between low/medium/high/critical bands.
+ * Clean arc gauge displaying risk score 0–100.
+ * Colors shift between teal (low), amber (medium), orange (high), red (critical).
  */
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 
 interface Props {
-  score: number | null;   // 0-100, null = no data
+  score: number | null;
   band: string | null;
-  size?: number;          // SVG size in px (default: 240)
+  size?: number;
   showLabel?: boolean;
 }
 
-// Severity thresholds aligned with the backend org config (backend/config/organizations/*.json
-// and OrganizationService._classify_severity). The real-vs-clone decision boundary is 7.5;
-// a clone (>= 7.5) is always "high", and >= 85 escalates to "critical". Keeping these synced
-// with the backend means the gauge color never contradicts the verdict/badge.
-const HIGH_MIN = 7.5;      // >= this => flagged as cloned (matches VERDICT_CUTOFF)
-const CRITICAL_MIN = 85;   // >= this => critical severity
-const THRESHOLD_MARKS = [HIGH_MIN, CRITICAL_MIN];
+const HIGH_MIN = 7.5;
+const CRITICAL_MIN = 85;
 
-function getBandColor(band: string | null, score: number | null): string {
-  const b = band ?? getBandFromScore(score ?? 0);
+function getBandColor(band: string | null, score: number): string {
+  const b = band ?? getBandFromScore(score);
   switch (b) {
-    case 'critical': return '#dc2626';
-    case 'high': return '#ef4444';
+    case 'critical': return '#ef4444';
+    case 'high': return '#f97316';
     case 'medium': return '#f59e0b';
     case 'low':
-    default: return '#22c55e';
+    default: return '#14b8a6';
   }
 }
 
@@ -37,39 +32,37 @@ function getBandFromScore(score: number): string {
   return 'low';
 }
 
-function getBandLabel(band: string | null): string {
+export function getBandLabel(band: string | null): string {
   switch (band) {
-    case 'critical': return 'CRITICAL RISK';
+    case 'critical': return 'CRITICAL';
     case 'high': return 'HIGH RISK';
-    case 'medium': return 'MEDIUM RISK';
-    case 'low': return 'LOW RISK';
-    default: return 'AWAITING DATA';
+    case 'medium': return 'MEDIUM';
+    case 'low': return 'AUTHENTIC';
+    default: return 'NO DATA';
   }
 }
 
-function getBandSubtext(band: string | null): string {
+export function getBandSubtext(band: string | null): string {
   switch (band) {
     case 'critical': return 'Highly likely synthetic voice';
     case 'high': return 'Potential voice-cloning detected';
-    case 'medium': return 'Anomalies detected, monitor';
+    case 'medium': return 'Anomalies detected — monitor';
     case 'low': return 'Voice appears authentic';
-    default: return 'Start monitoring to analyze';
+    default: return 'Awaiting analysis';
   }
 }
 
-export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) {
-  const canvasScore = score ?? 0;
-  const color = getBandColor(band, canvasScore);
+export function RiskGauge({ score, band, size = 200, showLabel = true }: Props) {
+  const val = score ?? 0;
+  const color = getBandColor(band, val);
   const bandLabel = getBandLabel(band);
   const bandSubtext = getBandSubtext(band);
 
-  // SVG arc parameters
   const cx = size / 2;
   const cy = size / 2;
-  const radius = (size / 2) * 0.78;
-  const strokeWidth = (size / 2) * 0.1;
+  const radius = (size / 2) * 0.75;
+  const strokeWidth = (size / 2) * 0.09;
 
-  // Arc spans 220 degrees (from 160° to 380° clockwise)
   const arcStart = 160 * (Math.PI / 180);
   const arcEnd = 380 * (Math.PI / 180);
   const totalAngle = arcEnd - arcStart;
@@ -89,60 +82,43 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
   }
 
   const bgArc = describeArc(arcStart, arcEnd);
-  const fillFraction = canvasScore / 100;
+  const fillFraction = val / 100;
   const fillEnd = arcStart + totalAngle * fillFraction;
-  const fillArc = canvasScore > 0 ? describeArc(arcStart, fillEnd) : '';
+  const fillArc = val > 0 ? describeArc(arcStart, fillEnd) : '';
 
-  // Circumference-based animation values
-  const arcLength = totalAngle * radius;
-
-  // Font sizes relative to gauge size
   const scoreFontSize = size * 0.2;
-  const labelFontSize = size * 0.067;
-  const subtextFontSize = size * 0.052;
-
-  const prevScore = useRef<number | null>(null);
-
-  useEffect(() => {
-    prevScore.current = score;
-  }, [score]);
+  const labelFontSize = size * 0.055;
+  const subtextFontSize = size * 0.045;
 
   return (
-    <div className="flex flex-col items-center gap-3" role="img" aria-label={`Risk score: ${Math.round(canvasScore)} out of 100. ${bandLabel}`}>
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        aria-hidden="true"
-      >
-        {/* Track arc (background) */}
+    <div className="flex flex-col items-center gap-2" role="img" aria-label={`Risk score: ${Math.round(val)} out of 100. ${bandLabel}`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden="true">
+        {/* Background track */}
         <path
           d={bgArc}
           fill="none"
-          stroke="var(--gauge-track)"
+          className="gauge-track"
           strokeWidth={strokeWidth}
           strokeLinecap="round"
         />
 
-        {/* Threshold markers */}
-        {THRESHOLD_MARKS.map((threshold) => {
+        {/* Threshold ticks */}
+        {[HIGH_MIN, CRITICAL_MIN].map((threshold) => {
           const angle = arcStart + totalAngle * (threshold / 100);
           const inner = {
-            x: cx + (radius - strokeWidth * 0.8) * Math.cos(angle),
-            y: cy + (radius - strokeWidth * 0.8) * Math.sin(angle),
+            x: cx + (radius - strokeWidth * 0.9) * Math.cos(angle),
+            y: cy + (radius - strokeWidth * 0.9) * Math.sin(angle),
           };
           const outer = {
-            x: cx + (radius + strokeWidth * 0.8) * Math.cos(angle),
-            y: cy + (radius + strokeWidth * 0.8) * Math.sin(angle),
+            x: cx + (radius + strokeWidth * 0.9) * Math.cos(angle),
+            y: cy + (radius + strokeWidth * 0.9) * Math.sin(angle),
           };
           return (
             <line
               key={threshold}
-              x1={inner.x}
-              y1={inner.y}
-              x2={outer.x}
-              y2={outer.y}
-              stroke="var(--gauge-track-strong)"
+              x1={inner.x} y1={inner.y}
+              x2={outer.x} y2={outer.y}
+              className="gauge-tick"
               strokeWidth={1.5}
             />
           );
@@ -156,41 +132,36 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
             stroke={color}
             strokeWidth={strokeWidth}
             strokeLinecap="round"
-            style={{
-              transition: 'stroke 0.5s ease, d 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
+            className="gauge-arc"
           />
         )}
 
         {/* Score number */}
         <text
           x={cx}
-          y={cy - size * 0.02}
+          y={cy - size * 0.01}
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize={scoreFontSize}
           fontWeight="700"
-          fill={score !== null ? color : 'var(--gauge-label)'}
-          fontFamily="Inter, system-ui, sans-serif"
-          style={{
-            fontVariantNumeric: 'tabular-nums',
-            transition: 'fill 0.5s ease',
-          }}
+          fill={score !== null ? color : 'rgb(var(--text-muted) / 0.6)'}
+          fontFamily="'JetBrains Mono', monospace"
+          className="score-number"
         >
-          {score !== null ? Math.round(canvasScore) : 'N/A'}
+          {score !== null ? Math.round(val) : '—'}
         </text>
 
-        {/* /100 label */}
+        {/* /100 */}
         {score !== null && (
           <text
             x={cx}
-            y={cy + size * 0.12}
+            y={cy + size * 0.1}
             textAnchor="middle"
             dominantBaseline="middle"
             fontSize={labelFontSize}
             fontWeight="500"
-            fill="var(--gauge-label)"
-            fontFamily="Inter, system-ui, sans-serif"
+            fill="rgb(var(--text-muted) / 0.7)"
+            fontFamily="'JetBrains Mono', monospace"
           >
             / 100
           </text>
@@ -198,14 +169,14 @@ export function RiskGauge({ score, band, size = 240, showLabel = true }: Props) 
       </svg>
 
       {showLabel && (
-        <div className="text-center space-y-1">
+        <div className="text-center space-y-0.5">
           <div
-            className="text-sm font-bold tracking-wider transition-colors duration-500"
-            style={{ color: score !== null ? color : 'rgb(var(--text-muted) / 0.5)' }}
+            className="text-xs font-semibold tracking-wider"
+            style={{ color: score !== null ? color : 'rgb(var(--text-muted) / 0.7)' }}
           >
             {bandLabel}
           </div>
-          <div className="text-xs text-text-muted">
+          <div className="text-[10px] text-[rgb(var(--text-muted))]">
             {bandSubtext}
           </div>
         </div>

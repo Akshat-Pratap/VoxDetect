@@ -129,19 +129,19 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
         (currentBand === 'high' && prevBand !== 'high' && prevBand !== 'critical') ||
         (currentBand === 'critical' && prevBand !== 'critical');
 
-      if (escalated && data.flagged) {
-        const isCritical = currentBand === 'critical';
-        addToast({
-          type: isCritical ? 'critical_risk' : 'high_risk',
-          title: isCritical ? '🔴 CRITICAL RISK DETECTED' : '⚠ HIGH RISK DETECTED',
-          message: `Risk score: ${Math.round(score ?? 0)}/100. ${
-            data.recommended_action ? '' : 'Potential voice-cloning detected.'
-          }`,
-          score: Math.round(score ?? 0),
-          band: currentBand ?? undefined,
-          action: data.recommended_action ?? undefined,
-        });
-      }
+if (escalated && data.flagged) {
+          const isCritical = currentBand === 'critical';
+          addToast({
+            type: isCritical ? 'critical_risk' : 'high_risk',
+            title: isCritical ? 'Voice cloning confirmed' : 'High risk of voice cloning',
+            message: `Risk score: ${Math.round(score ?? 0)}/100. ${
+              data.recommended_action ? '' : 'Potential voice-cloning detected.'
+            }`,
+            score: Math.round(score ?? 0),
+            band: currentBand ?? undefined,
+            action: data.recommended_action ?? undefined,
+          });
+        }
 
       prevBandRef.current = currentBand;
     },
