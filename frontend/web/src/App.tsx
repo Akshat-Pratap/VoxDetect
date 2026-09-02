@@ -17,6 +17,7 @@ import { Voiceprints } from '@/pages/Voiceprints';
 import { Alerts } from '@/pages/Alerts';
 import { Audit } from '@/pages/Audit';
 import { Settings } from '@/pages/Settings';
+import { Privacy } from '@/pages/Privacy';
 import { NotFound } from '@/pages/NotFound';
 
 export function App() {
@@ -28,13 +29,15 @@ export function App() {
             <AlertProvider>
               <Routes>
                 <Route element={<AppShell />}>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/" element={<Navigate to="/home" replace />} />
+                  <Route path="/home" element={<Dashboard />} />
                   <Route path="/live-call" element={<LiveCall />} />
                   <Route path="/analyze" element={<Analyze />} />
                   <Route path="/voiceprints" element={<Voiceprints />} />
                   <Route path="/alerts" element={<Alerts />} />
                   <Route path="/audit" element={<Audit />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/privacy" element={<Privacy />} />
                   <Route path="*" element={<NotFound />} />
                 </Route>
               </Routes>
