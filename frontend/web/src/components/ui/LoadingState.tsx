@@ -10,9 +10,9 @@ interface Props {
 
 export function LoadingState({ message = 'Loading...' }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4">
-      <Loader2 className="w-8 h-8 text-accent animate-spin" />
-      <p className="text-text-secondary text-sm">{message}</p>
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      <Loader2 className="w-6 h-6 text-[rgb(var(--accent))] animate-spin" />
+      <p className="text-xs text-[rgb(var(--text-muted))] font-mono">{message}</p>
     </div>
   );
 }

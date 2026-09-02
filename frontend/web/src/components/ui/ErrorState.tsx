@@ -13,18 +13,18 @@ interface Props {
 
 export function ErrorState({ title = 'Something went wrong', message, details, onRetry }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-      <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center">
-        <AlertTriangle className="w-6 h-6 text-red-400" />
+    <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
+      <div className="w-10 h-10 rounded-md bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.2)] flex items-center justify-center">
+        <AlertTriangle className="w-4 h-4 text-[rgb(var(--risk-critical))]" />
       </div>
       <div>
-        <h3 className="text-text-primary font-semibold mb-1">{title}</h3>
-        <p className="text-text-secondary text-sm max-w-sm">{message}</p>
+        <h3 className="text-xs font-semibold text-[rgb(var(--text-primary))] mb-1">{title}</h3>
+        <p className="text-[11px] text-[rgb(var(--text-muted))] max-w-sm">{message}</p>
         {details && (
-          <ul className="mt-3 text-left text-sm text-text-muted space-y-1">
+          <ul className="mt-2 text-left text-[11px] text-[rgb(var(--text-muted))] space-y-1">
             {details.map((d, i) => (
               <li key={i} className="flex items-start gap-2">
-                <span className="text-text-muted mt-0.5">•</span>
+                <span className="mt-0.5">•</span>
                 {d}
               </li>
             ))}

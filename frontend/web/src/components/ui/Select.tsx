@@ -1,7 +1,7 @@
 /**
  * src/components/ui/Select.tsx — accessible custom dropdown (no native <select>).
- * The menu renders in a portal at a fixed position so it never gets hidden
- * behind other elements (which can happen with backdrop-filter stacking contexts).
+ * The menu renders in a portal at a fixed position with a guaranteed minimum width
+ * and high-contrast typography that works cleanly in both dark and light modes.
  */
 import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -43,15 +43,18 @@ export function Select({
   const menuRef = useRef<HTMLDivElement>(null);
   const [coords, setCoords] = useState<{ top: number; left: number; width: number } | null>(null);
 
-  // Position the portal menu under the trigger, then close on any outside
-  // interaction, scroll, or resize.
   const openMenu = () => {
     const el = triggerRef.current;
     if (!el) return;
     const rect = el.getBoundingClientRect();
+    const menuWidth = Math.max(220, rect.width);
     let left = rect.left;
-    if (align === 'right') left = rect.right - rect.width;
-    setCoords({ top: rect.bottom + 6, left, width: rect.width });
+    if (align === 'right' || left + menuWidth > window.innerWidth - 12) {
+      left = rect.right - menuWidth;
+    }
+    if (left < 12) left = 12;
+
+    setCoords({ top: rect.bottom + 6, left, width: menuWidth });
     setOpen(true);
   };
 
@@ -92,7 +95,7 @@ export function Select({
 
   return (
     <>
-      <div className={`relative ${fullWidth ? 'w-full' : ''} ${className}`}>
+      <div className={`relative ${fullWidth ? 'w-full' : 'inline-block'} ${className}`}>
         <button
           ref={triggerRef}
           type="button"
@@ -101,16 +104,16 @@ export function Select({
           aria-expanded={open}
           aria-label={ariaLabel}
           className={[
-            'flex items-center gap-2 text-sm font-medium text-text-primary transition-colors',
+            'flex items-center gap-2 font-medium text-[rgb(var(--text-primary))] transition-all select-none',
             pill
-              ? 'py-1.5 pl-3 pr-2 rounded-full bg-bg-elevated border border-bg-border/15 hover:bg-bg-card-rgb hover:border-bg-border/30'
-              : 'py-2 px-3 rounded-[10px] bg-bg-elevated border border-bg-border/15 hover:border-bg-border/30',
-            fullWidth ? 'w-full' : '',
+              ? 'py-1.5 px-3 rounded-lg bg-[var(--hover-bg)] hover:bg-[var(--hover-bg-strong)] text-xs border border-[rgb(var(--border-subtle))]'
+              : 'py-2 px-3 rounded-lg bg-[var(--hover-bg)] border border-[rgb(var(--border-subtle))] hover:border-[rgb(var(--border))] text-sm',
+            fullWidth ? 'w-full justify-between' : '',
           ].join(' ')}
         >
-          <span className="flex-1 truncate text-left">{label}</span>
+          <span className="truncate">{label}</span>
           <ChevronDown
-            className={`w-4 h-4 shrink-0 text-text-muted transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
+            className={`w-3.5 h-3.5 shrink-0 text-[rgb(var(--text-muted))] transition-transform duration-150 ${open ? 'rotate-180' : ''}`}
           />
         </button>
       </div>
@@ -129,7 +132,7 @@ export function Select({
               width: coords.width,
               zIndex: 9999,
             }}
-            className="rounded-xl bg-bg-elevated border border-bg-border/15 p-1 shadow-lg"
+            className="rounded-xl bg-[rgb(var(--bg-elevated))] border border-[rgb(var(--border))] p-1.5 shadow-2xl"
           >
             {options.map((o) => {
               const selected = o.value === value;
@@ -143,19 +146,23 @@ export function Select({
                     onChange(o.value);
                     setOpen(false);
                   }}
-                  className={`w-full flex items-start justify-between gap-3 px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                  className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-left text-xs transition-all ${
                     selected
-                      ? 'bg-accent/15 text-accent font-medium'
-                      : 'text-text-secondary hover:bg-bg-card-rgb hover:text-text-primary'
+                      ? 'bg-[rgb(var(--accent))] text-white font-medium shadow-sm'
+                      : 'text-[rgb(var(--text-primary))] hover:bg-[var(--hover-bg-strong)]'
                   }`}
                 >
-                  <span className="min-w-0">
-                    <span className="block truncate">{o.label}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className={`font-medium ${selected ? 'text-white' : 'text-[rgb(var(--text-primary))]'}`}>
+                      {o.label}
+                    </div>
                     {o.sublabel && (
-                      <span className="block text-xs text-text-muted truncate">{o.sublabel}</span>
+                      <div className={`text-[10px] mt-0.5 ${selected ? 'text-white/80' : 'text-[rgb(var(--text-muted))]'}`}>
+                        {o.sublabel}
+                      </div>
                     )}
-                  </span>
-                  {selected && <Check className="w-4 h-4 shrink-0 mt-0.5" />}
+                  </div>
+                  {selected && <Check className="w-4 h-4 shrink-0 text-white" strokeWidth={2.5} />}
                 </button>
               );
             })}
