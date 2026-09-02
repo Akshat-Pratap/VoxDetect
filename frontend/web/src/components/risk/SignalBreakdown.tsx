@@ -1,6 +1,6 @@
 /**
  * src/components/risk/SignalBreakdown.tsx
- * Visual progress bars for the 4 fused signals.
+ * Horizontal signal bars for the 4 fused detectors.
  */
 import React from 'react';
 import { useSignalSettings } from '@/context/SignalSettingsContext';
@@ -15,36 +15,28 @@ export function SignalBreakdown({ signals }: Props) {
 
   const signalConfigs = [
     {
-      name: 'Deepfake Audio Model',
-      description: 'Wav2Vec2 acoustic artifacts · decisive',
+      name: 'Deepfake Model',
       value: signals.model,
-      weight: 'Verdict',
       key: 'model' as const,
-      type: 'risk',
+      decisive: true,
     },
     {
-      name: 'Prosody Anomaly',
-      description: 'Pitch variance, pause rhythm & tempo',
+      name: 'Prosody',
       value: signals.prosody_anomaly,
-      weight: 'Ref.',
       key: 'prosody_anomaly' as const,
-      type: 'anomaly',
+      decisive: false,
     },
     {
-      name: 'Voiceprint Mismatch',
-      description: 'Distance to enrolled speaker',
+      name: 'Voiceprint',
       value: signals.voiceprint_risk,
-      weight: 'Ref.',
       key: 'voiceprint_risk' as const,
-      type: 'risk',
+      decisive: false,
     },
     {
-      name: 'Call Context Risk',
-      description: 'Metadata flags & scenario',
+      name: 'Context',
       value: signals.context_risk,
-      weight: 'Ref.',
       key: 'context_risk' as const,
-      type: 'risk',
+      decisive: false,
     },
   ];
 
@@ -53,43 +45,42 @@ export function SignalBreakdown({ signals }: Props) {
       {signalConfigs.map((sig) => {
         const hasVal = sig.value !== null && sig.value !== undefined;
         const pct = hasVal ? Math.min(100, Math.max(0, Math.round(sig.value! * 100))) : 0;
+        const inVerdict = sig.decisive || fusion[sig.key];
 
-        const decisive = sig.weight === 'Verdict';
-        const inVerdict = sig.key === 'model' || fusion[sig.key];
-        let barGradient = 'from-emerald-500/70 to-green-400/70';
-        if (pct >= 70) barGradient = 'from-rose-500/80 to-red-400/80';
-        else if (pct >= 35) barGradient = 'from-amber-500/70 to-yellow-400/70';
-        if (decisive && pct < 35) barGradient = 'from-violet-500/70 to-accent-soft/70';
+        // Color: teal for low, amber for mid, orange/red for high
+        let barColor = 'bg-[rgb(var(--risk-low))]';
+        if (pct >= 70) barColor = 'bg-[rgb(var(--risk-high))]';
+        else if (pct >= 35) barColor = 'bg-[rgb(var(--risk-medium))]';
 
         return (
-          <div key={sig.name} className="rounded-2xl bg-glass/[0.04] border border-glass/[0.06] p-3.5">
-            <div className="flex justify-between items-center mb-1.5">
-              <span className="text-sm font-medium text-text-primary flex items-center gap-2">
-                {sig.name}
-                <span
-                  className={`text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-semibold ${
-                    decisive
-                      ? 'bg-accent/20 text-accent-soft'
-                      : 'bg-glass/[0.06] text-text-muted'
-                  }`}
-                >
-                  {sig.weight}
+          <div key={sig.name}>
+            {/* Header row */}
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-[rgb(var(--text-primary))]">
+                  {sig.name}
                 </span>
-                {inVerdict && (
-                  <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full font-semibold bg-emerald-500/20 text-emerald-400">
-                    {decisive ? 'Default' : 'In verdict'}
+                {sig.decisive && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[rgb(var(--accent))] text-white">
+                    Decisive
                   </span>
                 )}
-              </span>
-              <span className="text-sm font-semibold font-mono text-text-primary">
-                {hasVal ? `${pct}%` : 'N/A'}
+                {inVerdict && !sig.decisive && (
+                  <span className="text-[9px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-[rgba(255,255,255,0.05)] text-[rgb(var(--text-muted))]">
+                    In verdict
+                  </span>
+                )}
+              </div>
+              <span className="text-xs font-mono font-semibold text-[rgb(var(--text-primary))]">
+                {hasVal ? `${pct}%` : '—'}
               </span>
             </div>
-            <p className="text-xs text-text-secondary mb-2">{sig.description}</p>
-            <div className="w-full h-2 bg-glass/[0.06] rounded-full overflow-hidden">
+
+            {/* Bar */}
+            <div className="w-full h-1.5 bg-[rgba(255,255,255,0.05)] rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full bg-gradient-to-r ${barGradient} transition-all duration-700`}
-                style={{ width: `${decisive ? Math.max(pct, 8) : pct}%` }}
+                className={`h-full rounded-full ${barColor} signal-bar-fill`}
+                style={{ width: hasVal ? `${Math.max(pct, sig.decisive ? 6 : 0)}%` : '0%' }}
               />
             </div>
           </div>
