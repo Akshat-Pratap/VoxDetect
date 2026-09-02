@@ -12,15 +12,16 @@ interface NavItem {
   to: string;
   label: string;
   icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  accent: string;
 }
 
 const navItems: NavItem[] = [
-  { to: '/home', label: 'Home', icon: LayoutDashboard },
-  { to: '/analyze', label: 'Analyze', icon: AudioWaveform },
-  { to: '/live-call', label: 'Live Monitor', icon: Radio },
-  { to: '/alerts', label: 'Alerts', icon: ShieldAlert },
-  { to: '/audit', label: 'Audit Log', icon: ScrollText },
-  { to: '/settings', label: 'Settings', icon: Settings },
+  { to: '/home', label: 'Home', icon: LayoutDashboard, accent: 'rgb(var(--accent))' },
+  { to: '/analyze', label: 'Analyze', icon: AudioWaveform, accent: 'rgb(var(--accent))' },
+  { to: '/live-call', label: 'Live Monitor', icon: Radio, accent: 'rgb(var(--risk-high))' },
+  { to: '/alerts', label: 'Alerts', icon: ShieldAlert, accent: 'rgb(var(--risk-critical))' },
+  { to: '/audit', label: 'Audit Log', icon: ScrollText, accent: 'rgb(var(--risk-medium))' },
+  { to: '/settings', label: 'Settings', icon: Settings, accent: 'rgb(var(--accent-soft))' },
 ];
 
 export function Sidebar() {
@@ -41,13 +42,17 @@ export function Sidebar() {
                   <span
                     className={`flex items-center justify-center w-11 h-11 rounded-xl transition-colors duration-150 ${
                       isActive
-                        ? 'text-[rgb(var(--accent))] lnbg-[var(--hover-bg-strong)]'
+                        ? 'text-[rgb(var(--accent))]'
                         : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-secondary))] hover:bg-[var(--hover-bg)]'
                     }`}
+                    style={isActive ? { color: item.accent } : undefined}
                   >
                     {/* Active indicator — left edge bar */}
                     {isActive && (
-                      <span className="absolute left-1 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full bg-[rgb(var(--accent))]" />
+                      <span
+                        className="absolute left-1 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-full"
+                        style={{ background: item.accent }}
+                      />
                     )}
                     <Icon className="w-5 h-5" strokeWidth={isActive ? 2.2 : 1.8} />
                   </span>
@@ -69,7 +74,7 @@ export function Sidebar() {
               <span
                 className={`flex items-center justify-center w-11 h-11 rounded-xl transition-colors duration-150 ${
                   isActive
-                    ? 'text-[rgb(var(--accent))] lnbg-[var(--hover-bg-strong)]'
+                    ? 'bg-[var(--hover-bg-strong)] text-[rgb(var(--accent))]'
                     : 'text-[rgb(var(--text-muted))] hover:text-[rgb(var(--accent))] hover:bg-[var(--hover-bg)]'
                 }`}
               >
