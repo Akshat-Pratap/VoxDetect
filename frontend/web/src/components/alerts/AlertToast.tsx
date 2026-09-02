@@ -1,8 +1,17 @@
 /**
  * src/components/alerts/AlertToast.tsx
+ * Sonner-style toast (neutral card, colored icon + title, circle close button).
+ * No countdown bar, no accent bars — compact, quiet, matches app tokens.
  */
 import React from 'react';
-import { AlertCircle, AlertTriangle, CheckCircle, Info, X } from 'lucide-react';
+import {
+  AlertTriangle,
+  AlertOctagon,
+  AlertCircle,
+  CheckCircle2,
+  Info,
+  X,
+} from 'lucide-react';
 import type { ToastAlert } from '@/types';
 
 interface Props {
@@ -11,55 +20,74 @@ interface Props {
   onDismiss: (id: string) => void;
 }
 
+type SeverityStyle = {
+  icon: React.ReactNode;
+  fg: string;
+};
+
+const STYLES: Record<ToastAlert['type'], SeverityStyle> = {
+  critical_risk: {
+    icon: <AlertOctagon className="w-4 h-4" strokeWidth={2} />,
+    fg: 'rgb(var(--risk-critical))',
+  },
+  high_risk: {
+    icon: <AlertTriangle className="w-4 h-4" strokeWidth={2} />,
+    fg: 'rgb(var(--risk-high))',
+  },
+  error: {
+    icon: <AlertCircle className="w-4 h-4" strokeWidth={2} />,
+    fg: 'rgb(var(--risk-critical))',
+  },
+  success: {
+    icon: <CheckCircle2 className="w-4 h-4" strokeWidth={2} />,
+    fg: 'rgb(var(--accent))',
+  },
+  info: {
+    icon: <Info className="w-4 h-4" strokeWidth={2} />,
+    fg: 'rgb(var(--accent-soft))',
+  },
+};
+
 export function AlertToast({ toast, leaving = false, onDismiss }: Props) {
-  const isHighOrCrit = toast.type === 'high_risk' || toast.type === 'critical_risk';
+  const s = STYLES[toast.type];
 
   return (
     <div
-      className={`${leaving ? 'alert-exit' : 'alert-enter'} w-96 p-4 rounded-xl shadow-lg border backdrop-blur-md flex gap-3 ${
-        toast.type === 'critical_risk'
-          ? 'bg-red-950/90 border-red-500/50 text-red-200'
-          : toast.type === 'high_risk'
-          ? 'bg-red-900/80 border-red-500/40 text-red-100'
-          : toast.type === 'error'
-          ? 'bg-red-950/80 border-red-800 text-red-200'
-          : toast.type === 'success'
-          ? 'bg-green-950/80 border-green-700 text-green-200'
-          : 'bg-bg-elevated/95 border-bg-border text-text-primary'
-      }`}
+      role="status"
+      aria-live="assertive"
+      className={`${leaving ? 'alert-exit' : 'alert-enter'} relative flex items-center gap-2 rounded-lg border border-[rgb(var(--border))] bg-[rgb(var(--bg-elevated))] px-4 py-4 text-[13px] text-[rgb(var(--text-primary))]`}
+      style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)' }}
     >
-      <div className="mt-0.5 shrink-0">
-        {toast.type === 'critical_risk' || toast.type === 'high_risk' ? (
-          <AlertTriangle className="w-5 h-5 text-red-400 animate-pulse" />
-        ) : toast.type === 'error' ? (
-          <AlertCircle className="w-5 h-5 text-red-400" />
-        ) : toast.type === 'success' ? (
-          <CheckCircle className="w-5 h-5 text-green-400" />
-        ) : (
-          <Info className="w-5 h-5 text-accent" />
-        )}
+      {/* Icon (16px, accent colored) */}
+      <div className="h-4 w-4 shrink-0 flex items-center" style={{ color: s.fg }}>
+        {s.icon}
       </div>
-      <div className="flex-1 text-sm">
-        <div className="font-bold flex items-center justify-between">
-          <span>{toast.title}</span>
-          {toast.score !== undefined && (
-            <span className="font-mono text-xs px-2 py-0.5 rounded bg-black/40 border border-white/10">
-              Score: {toast.score}
-            </span>
-          )}
+
+      {/* Content */}
+      <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+        <div className="font-medium leading-[1.5] break-words" style={{ color: s.fg }}>
+          {toast.title}
         </div>
-        <p className="mt-1 text-xs opacity-90">{toast.message}</p>
+        <div className="text-[12.5px] leading-[1.4] text-[rgb(var(--text-secondary))] break-words">
+          {toast.message}
+        </div>
         {toast.action && (
-          <div className="mt-2 text-xs font-semibold p-2 bg-black/30 rounded border border-white/10 text-white">
-            Action: {toast.action}
-          </div>
+          <button
+            className="mt-1.5 ml-auto h-6 rounded px-2 text-[12px] font-medium text-[rgb(var(--accent))] bg-[rgb(var(--accent))/0.12] hover:bg-[rgb(var(--accent))/0.2] transition-colors"
+            onClick={() => onDismiss(toast.id)}
+          >
+            {toast.action}
+          </button>
         )}
       </div>
+
+      {/* Close button — circle, half outside the card, like sonner */}
       <button
         onClick={() => onDismiss(toast.id)}
-        className="text-text-muted hover:text-text-primary p-1 shrink-0 h-fit"
+        aria-label="Dismiss notification"
+        className="absolute -top-1 -right-1 z-10 h-5 w-5 flex items-center justify-center rounded-full border border-[rgb(var(--border))] bg-[rgb(var(--bg-elevated))] text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[var(--hover-bg-strong)] transition-colors"
       >
-        <X className="w-4 h-4" />
+        <X className="w-3 h-3" />
       </button>
     </div>
   );
