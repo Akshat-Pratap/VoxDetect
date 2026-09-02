@@ -10,7 +10,7 @@ import { SignalBreakdown } from '@/components/risk/SignalBreakdown';
 import { RiskBandBadge } from '@/components/risk/RiskBandBadge';
 import { AudioVisualizer } from '@/components/risk/AudioVisualizer';
 import { ORG_CONFIGS } from '@/types';
-import { Mic, MicOff, AlertOctagon, ShieldAlert, Info, Radio } from 'lucide-react';
+import { Mic, MicOff, AlertOctagon, ShieldAlert, Radio } from 'lucide-react';
 
 export function LiveCall() {
   const { org } = useOrganization();
@@ -39,6 +39,7 @@ export function LiveCall() {
     startMonitoring,
     stopMonitoring,
     isMonitoring,
+    audioLevel,
   } = useLiveMonitoring(org, context);
 
   const displayScore = riskScore ?? rollingRisk;
@@ -98,7 +99,7 @@ export function LiveCall() {
               </div>
 
               {isMonitoring ? (
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(239,68,68,0.12)] border border-[rgba(239,68,68,0.25)] text-[rgb(var(--risk-critical))] shrink-0">
+                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-semibold bg-[rgba(239,68,68,0.2)] border border-[rgba(239,68,68,0.5)] text-[rgb(var(--risk-critical))] shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--risk-critical))] animate-pulse" />
                   LIVE
                 </span>
@@ -110,50 +111,74 @@ export function LiveCall() {
               )}
             </div>
 
-            {/* Mic centered on top; gauge + status side by side below */}
-            <div className="flex flex-col items-center py-8 px-6">
-              <AudioVisualizer active={isMonitoring} band={band} flagged={flagged} />
+            {/* Two aligned columns: (mic + gauge) | (threat status + action + stats) */}
+            <div className="px-6 py-6 grid grid-cols-1 md:grid-cols-2 gap-10 items-stretch">
+              {/* Left column — mic directly above the semicircle */}
+              <div className="flex flex-col items-center gap-8">
+                {isMonitoring ? (
+                  <button
+                    onClick={stopMonitoring}
+                    title="Stop monitoring"
+                    className="cursor-pointer"
+                    aria-label="Stop monitoring"
+                  >
+                    <AudioVisualizer active={isMonitoring} band={band} flagged={flagged} level={audioLevel} />
+                  </button>
+                ) : (
+                  <AudioVisualizer active={false} band={band} flagged={flagged} level={0} />
+                )}
+                <RiskGauge score={displayScore} band={band} size={160} showLabel={false} />
+              </div>
 
-              <div className="mt-16 w-full grid grid-cols-1 sm:grid-cols-2 gap-10 items-center">
-                {/* Left: semicircle gauge */}
-                <div className="flex justify-center -ml-6">
-                  <RiskGauge score={displayScore} band={band} size={160} showLabel={false} />
+              {/* Right column — threat status aligned with the mic; action + stats pinned to the gauge */}
+              <div className="flex flex-col gap-5">
+                <div className="flex flex-col items-center gap-1.5 pt-10">
+                  <span className="text-xs font-medium font-mono uppercase tracking-wider text-[rgb(var(--text-secondary))] text-center">
+                    Threat Status
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <RiskBandBadge band={band} severity={severity} size="lg" />
+                    {flagged && (
+                      <span className="text-[10px] font-mono font-semibold text-[rgb(var(--risk-high))] flex items-center gap-1">
+                        <ShieldAlert className="w-3 h-3" /> FLAGGED
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-[rgb(var(--text-secondary))] leading-snug text-center min-h-[15px]">
+                    {band ? getBandSubtext(band) : 'Awaiting analysis'}
+                  </span>
                 </div>
 
-                {/* Right: status, horizontally aligned with the semicircle */}
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-mono uppercase tracking-wider text-[rgb(var(--text-muted))]">
-                      Threat Status
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <RiskBandBadge band={band} severity={severity} size="lg" />
-                      {flagged && (
-                        <span className="text-[10px] font-mono font-semibold text-[rgb(var(--risk-high))] flex items-center gap-1">
-                          <ShieldAlert className="w-3 h-3" /> FLAGGED
-                        </span>
-                      )}
+                {/* Action + stats grouped and pinned to the bottom (aligned with the gauge) */}
+                <div className="flex flex-col gap-4 mt-auto mb-12">
+                  {/* Recommended action — prominent, unmissable */}
+                  <div className="rounded-lg border border-[rgb(var(--accent))/0.3] bg-[rgb(var(--accent))/0.08] p-3.5 flex items-start gap-3">
+                    <div className="shrink-0 w-7 h-7 rounded-md bg-[rgb(var(--accent))/0.15] flex items-center justify-center">
+                      <ShieldAlert className="w-4 h-4 text-[rgb(var(--accent-soft))]" />
                     </div>
-                    <span className="text-[11px] text-[rgb(var(--text-muted))] leading-snug text-center min-h-[15px]">
-                      {band ? getBandSubtext(band) : 'Awaiting analysis'}
-                    </span>
-                  </div>
-
-                  <div className="w-full flex items-center justify-center gap-2 pt-1">
-                    <span className="text-[9px] font-semibold text-[rgb(var(--text-muted))] uppercase tracking-wider flex items-center gap-1 shrink-0">
-                      <Info className="w-3 h-3" /> Policy ({org.toUpperCase()})
-                    </span>
-                    <span className="text-[11px] text-[rgb(var(--text-secondary))] leading-snug text-center">
-                      {recommendedAction || orgPolicy.actions[band as keyof typeof orgPolicy.actions] || 'Awaiting analysis'}
-                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--accent-soft))]">
+                          Action Required
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold uppercase bg-[rgb(var(--accent))/0.15] border border-[rgb(var(--accent))/0.25] text-[rgb(var(--accent-soft))]">
+                          {org.toUpperCase()}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[13px] font-medium leading-snug text-[rgb(var(--text-primary))]">
+                        {recommendedAction ||
+                          orgPolicy.actions[band as keyof typeof orgPolicy.actions] ||
+                          'Awaiting analysis'}
+                      </p>
+                    </div>
                   </div>
 
                   <div className="w-full grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="p-2.5 rounded-md bg-[var(--hover-bg)] border border-[rgb(var(--border-subtle))] text-center">
+                    <div className="p-2.5 rounded-md bg-[var(--hover-bg)] border border-[rgb(var(--accent))/0.3] text-center">
                       <span className="text-[rgb(var(--text-muted))] block">Chunks</span>
                       <span className="font-mono font-semibold text-[rgb(var(--text-primary))]">{chunkCount}</span>
                     </div>
-                    <div className="p-2.5 rounded-md bg-[var(--hover-bg)] border border-[rgb(var(--border-subtle))] text-center">
+                    <div className="p-2.5 rounded-md bg-[var(--hover-bg)] border border-[rgb(var(--accent))/0.3] text-center">
                       <span className="text-[rgb(var(--text-muted))] block">Status</span>
                       <span className="font-mono font-semibold text-[rgb(var(--accent-soft))] capitalize">{wsStatus}</span>
                     </div>

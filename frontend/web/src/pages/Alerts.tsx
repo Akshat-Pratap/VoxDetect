@@ -146,16 +146,16 @@ export function Alerts() {
                     {item.analysis_id.slice(0, 12)}
                   </td>
                   <td className="p-3 font-mono font-semibold text-[rgb(var(--text-primary))]">
-                    {item.risk_score !== null ? `${Math.round(item.risk_score)}` : '—'}
+                    {item.risk_score !== null ? `${Math.round(item.risk_score)}` : 'N/A'}
                   </td>
                   <td className="p-3">
                     <RiskBandBadge band={item.risk_band} severity={item.severity} size="sm" />
                   </td>
                   <td className="p-3 text-[rgb(var(--text-secondary))]">
-                    {item.recommended_action || '—'}
+                    {item.recommended_action || 'N/A'}
                   </td>
                   <td className="p-3 font-mono text-[rgb(var(--text-muted))]">
-                    {item.processing_latency_ms ? `${Math.round(item.processing_latency_ms)}ms` : '—'}
+                    {item.processing_latency_ms ? `${Math.round(item.processing_latency_ms)}ms` : 'N/A'}
                   </td>
                 </tr>
               ))}

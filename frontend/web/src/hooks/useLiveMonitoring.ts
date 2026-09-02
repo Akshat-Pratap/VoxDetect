@@ -36,6 +36,7 @@ export interface LiveMonitoringState {
   chunkCount: number;
   wsError: string | null;
   micStatus: import('./useMicrophone').MicStatus;
+  audioLevel: number;
 }
 
 export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
@@ -56,11 +57,13 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
     chunkCount: 0,
     wsError: null,
     micStatus: 'idle',
+    audioLevel: 0,
   });
 
   const wsRef = useRef<VoxDetectWebSocket | null>(null);
   const prevBandRef = useRef<string | null>(null);
   const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastToastRef = useRef<number>(0);
   const isMonitoringRef = useRef(false);
   const orgRef = useRef(org);
   const contextRef = useRef(context);
@@ -75,7 +78,7 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
     wsRef.current?.sendAudioChunk(chunk);
   }, []);
 
-  const { status: micStatus, start: startMic, stop: stopMic } = useMicrophone({
+  const { status: micStatus, start: startMic, stop: stopMic, level: audioLevel } = useMicrophone({
     chunkIntervalMs: 3000,
     onChunk: handleChunk,
     onError: (msg) => {
@@ -122,26 +125,30 @@ export function useLiveMonitoring(org: OrgType, context: Partial<CallContext>) {
         };
       });
 
-      // Trigger alert on band escalation
+      // Trigger alert on band escalation into high/critical.
+      // Cooldown so rapid band yo-yoing doesn't spam a toast per chunk.
       const currentBand = data.band;
       const prevBand = prevBandRef.current;
       const escalated =
         (currentBand === 'high' && prevBand !== 'high' && prevBand !== 'critical') ||
         (currentBand === 'critical' && prevBand !== 'critical');
 
-if (escalated && data.flagged) {
+      if (escalated && (currentBand === 'high' || currentBand === 'critical')) {
+        const now = Date.now();
+        if (now - lastToastRef.current >= 10000) {
+          lastToastRef.current = now;
           const isCritical = currentBand === 'critical';
           addToast({
             type: isCritical ? 'critical_risk' : 'high_risk',
             title: isCritical ? 'Voice cloning confirmed' : 'High risk of voice cloning',
-            message: `Risk score: ${Math.round(score ?? 0)}/100. ${
-              data.recommended_action ? '' : 'Potential voice-cloning detected.'
-            }`,
+            message: `Risk score: ${Math.round(score ?? 0)}/100`,
+            detail: `Chunk ${data.chunk_index} · rolling ${Math.round(data.rolling_risk_score ?? 0)}/100`,
             score: Math.round(score ?? 0),
             band: currentBand ?? undefined,
             action: data.recommended_action ?? undefined,
           });
         }
+      }
 
       prevBandRef.current = currentBand;
     },
@@ -200,6 +207,7 @@ if (escalated && data.flagged) {
   const startMonitoring = useCallback(async () => {
     isMonitoringRef.current = true;
     prevBandRef.current = null;
+    lastToastRef.current = 0;
     setState((prev) => ({
       ...prev,
       wsStatus: 'connecting',
@@ -243,6 +251,7 @@ if (escalated && data.flagged) {
 
   return {
     ...state,
+    audioLevel,
     startMonitoring,
     stopMonitoring,
     isMonitoring: isMonitoringRef.current,

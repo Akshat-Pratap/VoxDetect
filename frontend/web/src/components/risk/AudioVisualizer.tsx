@@ -2,10 +2,9 @@
  * components/risk/AudioVisualizer.tsx
  * Live "mic is detecting" visualizer.
  * The MIC is the animation — it "beeps" (scale pulse) with sonar rings when
- * active. The waveform equalizer bars stay still so the signal reads as
- * steady monitoring, not a moving curve.
- * Colored by the current risk band. Pure CSS animations (GPU-accelerated,
- * transform/opacity only). Respects reduced motion.
+ * active. The equalizer bars react to the real audio level: flat when silent,
+ * dancing when speaking. Colored by the current risk band.
+ * Pure CSS animations + inline height. Respects reduced motion.
  */
 import React from 'react';
 import { Mic } from 'lucide-react';
@@ -14,11 +13,12 @@ export interface AudioVisualizerProps {
   active: boolean;
   band?: string | null;      // 'low' | 'high' | 'critical' | null
   flagged?: boolean;
+  level?: number;            // 0-1 real-time audio level
 }
 
 const BAR_COUNT = 21;
 
-export function AudioVisualizer({ active, band, flagged }: AudioVisualizerProps) {
+export function AudioVisualizer({ active, band, flagged, level = 0 }: AudioVisualizerProps) {
   const tone = flagged || band === 'high' || band === 'critical' ? 'risk' : 'safe';
 
   const ringClass =
@@ -70,16 +70,18 @@ export function AudioVisualizer({ active, band, flagged }: AudioVisualizerProps)
         </div>
       </div>
 
-      {/* Static equalizer — bars stay still, the mic is what "beeps" */}
+      {/* Equalizer — flat when quiet, dances with the voice */}
       <div className="flex items-end gap-[5px] h-10" aria-hidden="true">
         {Array.from({ length: BAR_COUNT }).map((_, i) => {
-          // Deterministic per-bar peak so the bars still read as an equalizer
-          const peak = 0.35 + 0.65 * Math.abs(Math.sin(i * 1.7 + 0.4));
+          // Per-bar phase so bars rise independently
+          const phase = 0.5 + 0.5 * Math.sin(i * 1.7 + 0.4);
+          // Speaking → bars dance around the live level; silence → near-flat
+          const h = active ? Math.max(3, level * phase * 44) : 3;
           return (
             <span
               key={i}
-              className={`w-[5px] rounded-full ${barClass}`}
-              style={{ height: `${Math.round(14 + peak * 26)}px` }}
+              className={`w-[5px] rounded-full ${barClass} transition-all duration-[60ms]`}
+              style={{ height: `${h}px` }}
             />
           );
         })}

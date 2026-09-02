@@ -30,7 +30,7 @@ export function Privacy() {
     {
       icon: FileCheck,
       title: 'Cryptographic Evidence Logging',
-      desc: 'Audit records store only anonymized timestamps, organization policy profiles, fused risk scores, and SHA-256 verification hashes—never voice content.',
+      desc: 'Audit records store only anonymized timestamps, organization policy profiles, fused risk scores, and SHA-256 verification hashes. Voice content is never stored.',
       badge: 'SHA-256 Hashing',
     },
     {

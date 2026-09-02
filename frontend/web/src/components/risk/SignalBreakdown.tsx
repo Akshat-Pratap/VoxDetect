@@ -77,7 +77,7 @@ export function SignalBreakdown({ signals }: Props) {
                 )}
               </div>
               <span className="text-xs font-mono font-semibold text-[rgb(var(--text-primary))]">
-                {hasVal ? `${pct}%` : '—'}
+                {hasVal ? `${pct}%` : 'N/A'}
               </span>
             </div>
 

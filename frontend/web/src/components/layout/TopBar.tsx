@@ -128,12 +128,19 @@ export function TopBar() {
           >
             <Plus className="w-4 h-4" /> New Analysis
           </Link>
+
+          {/* Divider — clearly separates primary analysis from the other actions */}
+          <div className="w-px h-5 bg-[rgb(var(--border))] mx-0.5" />
+
           <Link
             to="/voiceprints"
             className="btn btn-ghost btn-sm font-medium"
           >
             <UserPlus className="w-4 h-4" /> Enroll Speaker
           </Link>
+
+          <div className="w-px h-5 bg-[rgb(var(--border))] mx-0.5" />
+
           <button
             onClick={handleExportReport}
             className="btn btn-ghost btn-sm font-medium"
