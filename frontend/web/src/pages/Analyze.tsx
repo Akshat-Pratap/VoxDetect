@@ -26,11 +26,12 @@ export function Analyze() {
 
   useEffect(() => {
     if (result) {
-      if (result.band === 'high' || result.band === 'critical') {
+if (result.band === 'high' || result.band === 'critical') {
         addToast({
           type: result.band === 'critical' ? 'critical_risk' : 'high_risk',
           title: result.band === 'critical' ? 'CRITICAL RISK' : 'HIGH RISK',
-          message: `Score: ${Math.round(result.risk_score ?? 0)}/100`,
+          message: `Score: ${Math.round(result.risk_score ?? 0)}/100 · ${(result.confidence ?? 0).toFixed(2)} confidence`,
+          detail: `Analysis ${result.analysis_id} — ${result.band?.toUpperCase()} band`,
           score: Math.round(result.risk_score ?? 0),
           band: result.band ?? undefined,
           action: result.recommended_action ?? undefined,
@@ -40,6 +41,9 @@ export function Analyze() {
           type: 'info',
           title: 'Analysis complete',
           message: `${result.band?.toUpperCase() ?? 'NA'} risk — score ${Math.round(result.risk_score ?? 0)}/100`,
+          detail: result.recommended_action
+            ? `Recommended: ${result.recommended_action}`
+            : `Analysis ${result.analysis_id}`,
           score: Math.round(result.risk_score ?? 0),
           band: result.band ?? undefined,
         });

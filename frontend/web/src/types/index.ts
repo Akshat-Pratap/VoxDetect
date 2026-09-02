@@ -225,6 +225,8 @@ export interface ToastAlert {
   type: 'high_risk' | 'critical_risk' | 'info' | 'error' | 'success';
   title: string;
   message: string;
+  /** Optional slim second line of context (rendered smaller, keeps toast thin). */
+  detail?: string;
   score?: number;
   band?: string;
   action?: string;

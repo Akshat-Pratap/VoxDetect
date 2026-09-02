@@ -23,14 +23,14 @@ const AlertContext = createContext<AlertContextValue>({
 
 const EXIT_ANIM_MS = 300; // must match the .alert-exit animation duration
 
-// Auto-dismiss delay by type. Risk alerts stay a bit longer (judge needs time
-// to read them); errors and generic notices close sooner.
+// Auto-dismiss delay by type. Risk alerts stay long enough to assess; info and
+// success linger a little so users can read the added detail line.
 export const AUTO_CLOSE_MS: Record<ToastAlert['type'], number> = {
-  critical_risk: 6000,
-  high_risk: 6000,
-  error: 4000,
-  success: 3500,
-  info: 3500,
+  critical_risk: 9000,
+  high_risk: 8000,
+  error: 6000,
+  success: 5500,
+  info: 6000,
 };
 
 export function AlertProvider({ children }: { children: React.ReactNode }) {

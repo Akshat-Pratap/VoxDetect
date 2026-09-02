@@ -71,6 +71,11 @@ export function AlertToast({ toast, leaving = false, onDismiss }: Props) {
         <div className="text-[12.5px] leading-[1.4] text-[rgb(var(--text-secondary))] break-words">
           {toast.message}
         </div>
+        {toast.detail && (
+          <div className="text-[11px] leading-[1.4] text-[rgb(var(--text-muted))] break-words">
+            {toast.detail}
+          </div>
+        )}
         {toast.action && (
           <button
             className="mt-1.5 ml-auto h-6 rounded px-2 text-[12px] font-medium text-[rgb(var(--accent))] bg-[rgb(var(--accent))/0.12] hover:bg-[rgb(var(--accent))/0.2] transition-colors"
