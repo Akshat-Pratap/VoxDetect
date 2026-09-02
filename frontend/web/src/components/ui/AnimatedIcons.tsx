@@ -22,6 +22,8 @@ interface StateIconProps {
   className?: string;
   active?: boolean;
   autoToggle?: number;
+  /** Changing counter — re-triggers the entrance animation (e.g. new toast count). */
+  pulse?: number;
 }
 
 function useStateful(active: boolean | undefined, autoToggle?: number) {
@@ -68,16 +70,16 @@ export function SuccessIcon({ size = 16, color = 'currentColor', className, acti
 }
 
 /* ─── BELL → NOTIFICATION ─── bell rings then a dot appears */
-export function NotificationIcon({ size = 16, color = 'currentColor', className, active, autoToggle }: StateIconProps) {
+export function NotificationIcon({ size = 16, color = 'currentColor', className, active, autoToggle, pulse }: StateIconProps) {
   const notif = useStateful(active, autoToggle);
   return (
-    <motion.svg viewBox="7 4 26 31" fill="none" className={cn(className)}
+    <motion.svg key={pulse ?? 0} viewBox="7 4 26 31" fill="none" className={cn(className)}
       animate={notif ? { rotate: [0, 8, -8, 6, -6, 3, 0] } : { rotate: 0 }}
       transition={{ duration: 0.6 }}
       style={{ width: size, height: size, transformOrigin: '50% 8%' }}>
       <path d="M28 16a8 8 0 00-16 0c0 8-4 10-4 10h24s-4-2-4-10" stroke={color} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
       <path d="M17.5 30a3 3 0 005 0" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
-      <motion.circle cx="28" cy="10" r="4"
+      <motion.circle cx="28" cy="10" r="5" fill="rgb(var(--risk-critical))"
         animate={notif ? { scale: [0, 1.3, 1], opacity: 1 } : { scale: 0, opacity: 0 }}
         transition={{ duration: 0.4, ease: spring }}
       />

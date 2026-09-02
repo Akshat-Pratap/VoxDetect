@@ -4,7 +4,7 @@
  * Row 1: Logo + wordmark | Org selector | Status + Theme + Bell + Avatar
  * Row 2: Action buttons (centered, prominent size) | Model status pill
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useOrganization } from '@/context/OrganizationContext';
 import { useTheme } from '@/context/ThemeContext';
@@ -30,6 +30,13 @@ export function TopBar() {
   const { org, setOrg } = useOrganization();
   const { theme, toggleTheme } = useTheme();
   const { toasts } = useAlertContext();
+  // Persistent "unread" marker: lights when a toast arrives and stays until
+  // the user opens the Alerts page (bell click acknowledges the notification).
+  const [unread, setUnread] = useState(false);
+  useEffect(() => {
+    if (toasts.length > 0) setUnread(true);
+  }, [toasts.length]);
+
   const { health } = useHealthCheck(30000);
   const isOnline = health?.status === 'ok';
   const navigate = useNavigate();
@@ -92,9 +99,12 @@ export function TopBar() {
           <Tooltip label="Notifications" side="bottom">
             <button
               className="relative p-2 rounded-lg text-[rgb(var(--text-muted))] hover:text-[rgb(var(--text-primary))] hover:bg-[var(--hover-bg)] transition-colors"
-              onClick={() => navigate('/alerts')}
+              onClick={() => {
+                setUnread(false);
+                navigate('/alerts');
+              }}
             >
-              <NotificationIcon size={16} className="text-[rgb(var(--text-muted))]" active={toasts.length > 0} />
+              <NotificationIcon size={16} className="text-[rgb(var(--text-muted))]" active={unread} pulse={toasts.length} />
             </button>
           </Tooltip>
 
