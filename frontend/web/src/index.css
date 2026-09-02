@@ -2,236 +2,185 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── CSS Design Tokens ──────────────────────────────────────────────── */
-/* Default = dark. .light overrides. Tokens stored as RGB triples so
-   Tailwind's `/ <alpha-value>` opacity utilities work everywhere. */
-:root, .dark {
+/* ── Design Tokens — SOC Dashboard ────────────────────────────────── */
+:root {
   color-scheme: dark;
 
-  --bg: 5 5 7;
-  --bg-surface: 11 11 15;
-  --bg-elevated: 19 19 24;
-  --bg-card-rgb: 22 22 28;
-  --bg-border: 255 255 255;
+  --bg: 19 19 21;           /* #131315 near-black */
+  --bg-surface: 19 19 21;   /* #131315 recessed content canvas */
+  --bg-elevated: 28 29 32;  /* #1c1d20 */
+  --bg-card-rgb: 28 29 32;  /* #1c1d20 card bg */
 
-  --text-primary: 245 245 247;
-  --text-secondary: 161 161 170;
-  --text-muted: 107 107 116;
-  --text-inverse: 10 10 10;
+  /* Floating app frame + page backdrop */
+  --page-bg: 10 10 12;      /* #0a0a0c behind the frame */
+  --frame-bg: 32 33 36;     /* #202124 Colab toolbar frame (distinct from canvas) */
+  --frame-border: 45 46 50; /* #2d2e32 */
 
-  /* glass frost — white tint on dark */
-  --glass: 255 255 255;
+  --text-primary: 240 240 242;
+  --text-secondary: 154 154 154;  /* #9a9a9a */
+  --text-muted: 110 110 110;
+  --text-inverse: 19 19 20;
 
-  --accent: 139 92 246;
-  --accent-hover: 124 58 237;
-  --accent-muted: 28 23 48;
-  --accent-soft: 167 139 250;
+  --border: 60 60 60;       /* #3c3c3c */
+  --border-strong: 60 60 60;
+  --border-subtle: 44 44 46;
 
-  --risk-low: 52 211 153;
-  --risk-low-a: 0.10;
-  --risk-medium: 251 191 36;
-  --risk-medium-a: 0.10;
-  --risk-high: 251 113 133;
+  /* Card bg alias (stronger than --bg-surface) */
+  --bg-card: 30 30 32;
+
+  /* Accent: teal — reads "security tooling" */
+  --accent: 20 184 166;     /* #14b8a6 teal-500 */
+  --accent-hover: 13 148 136;
+  --accent-muted: 20 184 166;
+  --accent-soft: 94 234 212;
+
+  /* Risk bands */
+  --risk-low: 20 184 166;       /* teal — authentic */
+  --risk-low-a: 0.12;
+  --risk-medium: 245 158 11;    /* amber — anomaly */
+  --risk-medium-a: 0.12;
+  --risk-high: 249 115 22;      /* orange — cloned */
   --risk-high-a: 0.12;
-  --risk-critical: 244 63 94;
+  --risk-critical: 239 68 68;   /* red — definite clone */
   --risk-critical-a: 0.14;
 
-  --status-info: 129 140 248;
-  --blur-xl: 24px;
+  --status-online: 34 197 94;
+  --status-offline: 239 68 68;
+
+  /* Surfaces */
+  --card-bg: rgba(30, 30, 32, 1);
+  --rail-bg: rgba(22, 22, 24, 1);
+  --topbar-bg: rgba(22, 22, 24, 0.95);
+  --hover-bg: rgba(255, 255, 255, 0.04);
+  --hover-bg-strong: rgba(255, 255, 255, 0.07);
 }
 
 .light {
   color-scheme: light;
-
-  --bg: 247 247 250;
-  --bg-surface: 240 240 244;
+  --bg: 245 245 247;
+  --bg-surface: 238 238 242;
   --bg-elevated: 255 255 255;
   --bg-card-rgb: 255 255 255;
-  --bg-border: 20 20 30;
+
+  --page-bg: 240 240 243;
+  --frame-bg: 255 255 255;
+  --frame-border: 226 226 232;
 
   --text-primary: 20 20 26;
-  --text-secondary: 92 92 104;
-  --text-muted: 132 132 142;
+  --text-secondary: 100 100 110;
+  --text-muted: 140 140 150;
   --text-inverse: 255 255 255;
 
-  /* glass frost — dark tint on light */
-  --glass: 18 18 26;
+  --border: 220 220 225;
+  --border-strong: 220 220 225;
+  --border-subtle: 230 230 235;
 
-  --accent: 124 58 237;
-  --accent-hover: 109 40 217;
-  --accent-muted: 233 227 252;
-  --accent-soft: 139 92 246;
+  --bg-card: 255 255 255;
 
-  --risk-low: 5 150 105;
-  --risk-low-a: 0.12;
-  --risk-medium: 202 138 4;
-  --risk-medium-a: 0.12;
-  --risk-high: 225 29 72;
-  --risk-high-a: 0.12;
-  --risk-critical: 190 18 60;
-  --risk-critical-a: 0.13;
+  --accent: 13 148 136;
+  --accent-hover: 15 118 110;
+  --accent-muted: 13 148 136;
+  --accent-soft: 20 184 166;
 
-  --status-info: 79 70 229;
+  --risk-low: 13 148 136;
+  --risk-medium: 217 119 6;
+  --risk-high: 234 88 12;
+  --risk-critical: 220 38 38;
+
+  --card-bg: rgba(255, 255, 255, 1);
+  --rail-bg: rgba(245, 245, 247, 1);
+  --topbar-bg: rgba(245, 245, 247, 0.95);
+  --hover-bg: rgba(0, 0, 0, 0.03);
+  --hover-bg-strong: rgba(0, 0, 0, 0.06);
 }
 
-/* Direct rgba helpers used by custom component classes below */
-:root, .dark {
-  --bg-card: rgba(22, 22, 28, 0.55);
-  --border-soft: rgba(255, 255, 255, 0.08);
-  --glass-hover: rgba(30, 30, 38, 0.6);
-  --frost-strong: rgba(255, 255, 255, 0.16);
-  --frost-mid: rgba(255, 255, 255, 0.12);
-  --frost-soft: rgba(255, 255, 255, 0.05);
-  --gauge-track: rgba(255, 255, 255, 0.07);
-  --gauge-track-strong: rgba(255, 255, 255, 0.15);
-  --gauge-label: rgba(255, 255, 255, 0.35);
-}
-.light {
-  --bg-card: rgba(255, 255, 255, 0.72);
-  --border-soft: rgba(18, 18, 26, 0.10);
-  --glass-hover: rgba(255, 255, 255, 0.85);
-  --frost-strong: rgba(18, 18, 26, 0.14);
-  --frost-mid: rgba(18, 18, 26, 0.12);
-  --frost-soft: rgba(18, 18, 26, 0.06);
-  --gauge-track: rgba(18, 18, 26, 0.10);
-  --gauge-track-strong: rgba(18, 18, 26, 0.20);
-  --gauge-label: rgba(18, 18, 26, 0.45);
-}
-
-/* Transition themes smoothly */
-body, .glass, .card, .btn, .input, .toggle-slider {
-  transition: background-color 0.25s ease, color 0.25s ease,
-              border-color 0.25s ease, box-shadow 0.25s ease;
+/* ── Smooth theme cross-fade ───────────────────────────────────────── */
+/* Color-bearing surfaces/shapes interpolate when design tokens change
+   (theme switch, hover, focus). Existing, more specific transitions on
+   .btn/.card/etc. keep winning; transform/opacity are excluded so
+   animations don't lag. `color` is deliberately OMITTED: it's inherited,
+   so transitioning it globally makes children re-chase their parent's
+   animated value every frame (a mid-transition "blink"). Text instead
+   snaps with the surface behind it, which reads cleaner. */
+@media (prefers-reduced-motion: no-preference) {
+  *,
+  *::before,
+  *::after {
+    transition-property:
+      background-color,
+      border-color,
+      box-shadow,
+      outline-color,
+      fill,
+      stroke;
+    transition-duration: 0.2s;
+    transition-timing-function: ease;
+  }
 }
 
 /* ── Base ──────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
-
 html { font-size: 16px; -webkit-text-size-adjust: 100%; }
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   color: rgb(var(--text-primary));
-  line-height: 1.55;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: rgb(var(--bg));
-}
-
-/* Ambient gradient canvas — fixed behind every surface */
-/* Ambient background — clean flat backdrop (no glow blobs) */
-.ambient {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background: rgb(var(--bg));
+  background-color: rgb(var(--page-bg));
 }
 
 #root {
   min-height: 100vh;
   position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
 }
 
-/* Grain/noise overlay for depth */
-.grain {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
 /* ── Scrollbar ─────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: var(--frost-mid);
-  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--frost-strong); }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); }
 
-/* ── Focus visible ──────────────────────────────────────────────────── */
+/* ── Focus ─────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid rgb(var(--accent));
   outline-offset: 2px;
-  border-radius: 10px;
+  border-radius: 4px;
 }
 
 /* ── Typography helpers ────────────────────────────────────────────── */
 .font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   letter-spacing: -0.01em;
 }
-.display {
-  font-weight: 650;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
-}
 
-/* Narrow uppercase labels — legible, not shouty */
-.eyebrow {
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: rgb(var(--text-muted));
-}
-
-/* ── Refined surface edges ─────────────────────────────────────────── */
-/* Layered chrome edge: solid hairline + tapered gradient highlight.
-   Gives the sidebar/navbar outlines a polished, designed look. */
-.edge-r, .edge-b { position: relative; }
-.edge-r::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0; right: -1px;
-  width: 1px;
-  background: linear-gradient(180deg, var(--frost-strong), var(--border-soft) 55%, transparent 95%);
-  pointer-events: none;
-}
-.edge-b::after {
-  content: '';
-  position: absolute;
-  left: 0; right: 0; bottom: -1px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--frost-strong) 8%, var(--frost-strong) 92%, transparent);
-  pointer-events: none;
-}
-
-/* ── Glass surfaces ────────────────────────────────────────────────── */
-.glass {
-  background: var(--bg-card);
-  backdrop-filter: blur(var(--blur-xl)) saturate(118%);
-  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(118%);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-xl, 28px);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-}
-.glass-hover:hover {
-  border-color: var(--frost-strong);
-  background: var(--glass-hover);
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
+/* ── Card ──────────────────────────────────────────────────────────── */
 .card {
-  background: var(--bg-card);
-  backdrop-filter: blur(var(--blur-xl)) saturate(118%);
-  -webkit-backdrop-filter: blur(var(--blur-xl)) saturate(118%);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-lg, 20px);
-  padding: 1.5rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  background: var(--card-bg);
+  border: none;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
+
+/* ── Native select/option dark-mode fix ───────────────────────────── */
+select.input option,
+select option {
+  background: rgb(var(--bg-elevated));
+  color: rgb(var(--text-primary));
+  padding: 8px;
+}
+.light select.input option,
+.light select option {
+  background: #fff;
+  color: rgb(var(--text-primary));
 }
 
 /* ── Button ────────────────────────────────────────────────────────── */
@@ -240,158 +189,169 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1.15rem;
-  border-radius: 9999px;
-  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease,
-              box-shadow 0.2s ease, opacity 0.2s ease;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
   white-space: nowrap;
-  letter-spacing: -0.01em;
+  font-family: inherit;
 }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btn-primary {
-  background: linear-gradient(180deg, #ffffff, #eceaf2);
-  color: #0a0a0a;
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.14);
-  border-color: rgba(0,0,0,0.06);
-}
-.btn-primary:hover:not(:disabled) { box-shadow: 0 2px 5px rgba(0,0,0,0.16); }
-
-.btn-accent {
-  background: linear-gradient(180deg, #9d6bff, #7c3aed);
+  background: rgb(var(--accent));
   color: #fff;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  border-color: rgb(var(--accent));
 }
-.btn-accent:hover:not(:disabled) {
-  box-shadow: 0 2px 5px rgba(0,0,0,0.22);
-}
+.btn-primary:hover:not(:disabled) { background: rgb(var(--accent-hover)); }
 
 .btn-ghost {
-  background: var(--frost-soft);
-  color: rgb(var(--text-primary));
-  border-color: var(--frost-mid);
-  backdrop-filter: blur(12px);
+  background: transparent;
+  color: rgb(var(--text-secondary));
+  border-color: transparent;
 }
 .btn-ghost:hover:not(:disabled) {
-  background: var(--frost-soft);
-  border-color: var(--frost-strong);
+  background: var(--hover-bg-strong);
+  color: rgb(var(--text-primary));
+  border-color: transparent;
+}
+
+.btn-outline {
+  background: transparent;
+  color: rgb(var(--text-primary));
+  border-color: rgb(var(--border));
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: rgb(var(--text-secondary));
 }
 
 .btn-danger {
-  background: rgba(244,63,94,0.12);
-  color: rgb(var(--risk-high));
-  border-color: rgba(244,63,94,0.3);
+  background: rgba(239, 68, 68, 0.12);
+  color: rgb(var(--risk-critical));
+  border-color: rgba(239, 68, 68, 0.25);
 }
 .btn-danger:hover:not(:disabled) {
-  background: rgba(244,63,94,0.22);
+  background: rgba(239, 68, 68, 0.2);
 }
 
-.btn-success {
-  background: linear-gradient(180deg, #34d399, #10b981);
-  color: #04211a;
-  font-weight: 600;
-}
-.btn-success:hover:not(:disabled) { filter: brightness(1.05); }
-
-.btn-lg { padding: 0.8rem 1.6rem; font-size: 1rem; }
-.btn-sm { padding: 0.42rem 0.9rem; font-size: 0.8rem; }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.75rem; }
+.btn-lg { padding: 0.625rem 1.25rem; font-size: 0.875rem; }
 
 /* ── Badge ─────────────────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.28rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
+  gap: 0.3rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
   border: 1px solid transparent;
 }
 
 /* ── Form inputs ───────────────────────────────────────────────────── */
-.input, select.input {
+.input {
   width: 100%;
-  padding: 0.6rem 0.9rem;
-  background: var(--frost-soft);
-  border: 1px solid var(--frost-mid);
-  border-radius: 14px;
+  padding: 0.5rem 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgb(var(--border));
+  border-radius: 6px;
   color: rgb(var(--text-primary));
-  font-size: 0.9rem;
+  font-size: 0.8125rem;
   font-family: inherit;
   outline: none;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color 0.15s ease;
 }
 .input:focus {
   border-color: rgb(var(--accent));
-  background: var(--frost-soft);
 }
 .input::placeholder { color: rgb(var(--text-muted)); }
 
+select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a9a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
 /* ── Toggle switch ─────────────────────────────────────────────────── */
-.toggle { position: relative; display: inline-flex; width: 2.6rem; height: 1.55rem; cursor: pointer; }
+.toggle { position: relative; display: inline-flex; width: 2.75rem; height: 1.5rem; cursor: pointer; }
 .toggle input { opacity: 0; width: 0; height: 0; }
 .toggle-slider {
   position: absolute; inset: 0;
-  background: var(--frost-mid);
+  background: rgb(var(--border));
   border-radius: 9999px;
   transition: background 0.2s ease;
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.25);
 }
 .toggle-slider::before {
   content: '';
   position: absolute;
   left: 3px; top: 3px;
-  width: 1.15rem; height: 1.15rem;
-  background: rgb(var(--text-inverse));
+  width: 1.125rem; height: 1.125rem;
+  background: #fff;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
 }
 .toggle input:checked + .toggle-slider { background: rgb(var(--accent)); }
-.toggle input:checked + .toggle-slider::before { transform: translateX(1.08rem); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(1.15rem); }
+
+/* ── Animations ────────────────────────────────────────────────────── */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-enter { animation: fadeIn 0.2s ease-out; }
 
 @keyframes alert-enter {
-  from { opacity: 0; transform: translateX(calc(100% + 24px)); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes alert-exit {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0; transform: translateX(calc(100% + 24px)); }
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(50%); }
 }
+.alert-enter { animation: alert-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1); }
+.alert-exit { animation: alert-exit 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
 
-/* ── Motion primitives ─────────────────────────────────────────────── */
-.gauge-arc { transition: stroke-dashoffset 0.7s cubic-bezier(0.2,0.8,0.2,1), stroke 0.5s ease; }
-.score-number { transition: color 0.5s ease; font-variant-numeric: tabular-nums; }
-.signal-bar-fill { transition: width 0.6s cubic-bezier(0.2,0.8,0.2,1); }
-.page-enter { animation: fadeIn 0.3s ease-out; }
-.pulse-live { animation: pulseSoft 2.4s ease-in-out infinite; }
-.alert-enter { animation: alert-enter 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
-.alert-exit { animation: alert-exit 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+/* ── Gauge transitions ─────────────────────────────────────────────── */
+.gauge-arc { transition: stroke-dashoffset 0.6s cubic-bezier(0.2,0.8,0.2,1), stroke 0.4s ease; }
+.score-number { transition: color 0.4s ease; font-variant-numeric: tabular-nums; }
+.signal-bar-fill { transition: width 0.5s cubic-bezier(0.2,0.8,0.2,1); }
+
+/* ── Risk gauge track (theme-aware, clearly visible) ───────────────── */
+.gauge-track { stroke: rgba(255, 255, 255, 0.14); }
+.light .gauge-track { stroke: rgba(0, 0, 0, 0.12); }
+.gauge-tick { stroke: rgba(255, 255, 255, 0.35); }
+.light .gauge-tick { stroke: rgba(0, 0, 0, 0.28); }
 
 /* ── Live mic visualizer ────────────────────────────────────── */
 @keyframes vox-ring {
   0%   { transform: scale(0.55); opacity: 0.9; }
   100% { transform: scale(1.45); opacity: 0; }
 }
+@keyframes vox-beep {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.12); }
+}
 @keyframes vox-bar {
   0%, 100% { transform: scaleY(0.25); }
   50%      { transform: scaleY(1); }
 }
-.vox-bar-idle { animation: none; }
 
 /* ── Reduced motion ────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .grain { animation: none !important; }
-  .btn, .card, .glass { transition: none !important; }
+  .btn, .card { transition: none !important; }
   .gauge-arc, .score-number, .signal-bar-fill, .alert-enter { transition: none !important; }
-  [class*="animate-\[vox-"] { animation: none !important; }
   * { scroll-behavior: auto !important; }
 }
