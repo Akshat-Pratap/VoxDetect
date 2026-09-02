@@ -11,9 +11,9 @@ import { Select } from '@/components/ui/Select';
 import type { SelectOption } from '@/components/ui/Select';
 
 const policyOptions: SelectOption[] = [
-  { value: 'bank', label: 'Bank — Strict Financial' },
-  { value: 'enterprise', label: 'Enterprise — Standard' },
-  { value: 'government', label: 'Government — Maximum Security' },
+  { value: 'bank', label: 'Bank · Strict Financial' },
+  { value: 'enterprise', label: 'Enterprise · Standard' },
+  { value: 'government', label: 'Government · Maximum Security' },
 ];
 
 export function Settings() {
@@ -99,7 +99,7 @@ export function Settings() {
             <div className="pt-2 border-t border-[rgb(var(--border-subtle))] space-y-1">
               <div className="flex justify-between">
                 <span className="text-[rgb(var(--text-muted))]">Version</span>
-                <span className="font-mono text-[rgb(var(--text-primary))]">{health?.version || '—'}</span>
+                <span className="font-mono text-[rgb(var(--text-primary))]">{health?.version || 'N/A'}</span>
               </div>
             </div>
           </div>

@@ -46,7 +46,7 @@ export function getBandSubtext(band: string | null): string {
   switch (band) {
     case 'critical': return 'Highly likely synthetic voice';
     case 'high': return 'Potential voice-cloning detected';
-    case 'medium': return 'Anomalies detected — monitor';
+    case 'medium': return 'Anomalies detected. Monitor.';
     case 'low': return 'Voice appears authentic';
     default: return 'Awaiting analysis';
   }
@@ -148,7 +148,7 @@ export function RiskGauge({ score, band, size = 200, showLabel = true }: Props) 
           fontFamily="'JetBrains Mono', monospace"
           className="score-number"
         >
-          {score !== null ? Math.round(val) : '—'}
+          {score !== null ? Math.round(val) : 'N/A'}
         </text>
 
         {/* /100 */}

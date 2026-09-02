@@ -161,7 +161,7 @@ export function ExportReportModal({ open, org, systemInfo, onClose }: ExportRepo
       });
       onClose();
     } catch {
-      setError('Export failed — could not reach the VoxDetect API.');
+      setError('Export failed. Could not reach the VoxDetect API.');
     } finally {
       setExporting(false);
     }
