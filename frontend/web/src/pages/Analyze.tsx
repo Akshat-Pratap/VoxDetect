@@ -25,15 +25,25 @@ export function Analyze() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (result && (result.band === 'high' || result.band === 'critical')) {
-      addToast({
-        type: result.band === 'critical' ? 'critical_risk' : 'high_risk',
-        title: result.band === 'critical' ? 'CRITICAL RISK' : 'HIGH RISK',
-        message: `Score: ${Math.round(result.risk_score ?? 0)}/100`,
-        score: Math.round(result.risk_score ?? 0),
-        band: result.band ?? undefined,
-        action: result.recommended_action ?? undefined,
-      });
+    if (result) {
+      if (result.band === 'high' || result.band === 'critical') {
+        addToast({
+          type: result.band === 'critical' ? 'critical_risk' : 'high_risk',
+          title: result.band === 'critical' ? 'CRITICAL RISK' : 'HIGH RISK',
+          message: `Score: ${Math.round(result.risk_score ?? 0)}/100`,
+          score: Math.round(result.risk_score ?? 0),
+          band: result.band ?? undefined,
+          action: result.recommended_action ?? undefined,
+        });
+      } else {
+        addToast({
+          type: 'info',
+          title: 'Analysis complete',
+          message: `${result.band?.toUpperCase() ?? 'NA'} risk — score ${Math.round(result.risk_score ?? 0)}/100`,
+          score: Math.round(result.risk_score ?? 0),
+          band: result.band ?? undefined,
+        });
+      }
     }
   }, [result, addToast]);
 
