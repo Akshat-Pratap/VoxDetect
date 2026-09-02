@@ -47,8 +47,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((t) => (t === 'light' ? 'dark' : 'light'));
-  }, []);
+    const next = theme === 'light' ? 'dark' : 'light';
+    setTheme(next);
+    localStorage.setItem(STORAGE_KEY, next);
+    // Animate the theme switch with the View Transitions API when available.
+    // Falls back to the plain global cross-fade (instant class swap) otherwise.
+    const doc = document as Document & {
+      startViewTransition?: (cb: () => void) => { finished: Promise<void> };
+    };
+    if (doc.startViewTransition) {
+      doc.startViewTransition(() => {
+        applyThemeClass(next);
+      });
+    }
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
